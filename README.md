@@ -38,13 +38,13 @@ lib/
   services/       Data access and other app services
 ```
 
-Folders may be added as the design is implemented. Remove any unused placeholder folders from the final structure description.
+Folders may be added or removed later these are just the initials attempt.
 
 ## Technology and packages
 
 - **Flutter and Dart** ” app framework and language.
-- **cupertino_icons** ” icon font for Cupertino-style icons; version 1.0.9 was resolved in the current setup. Keep this listed only if it remains a direct dependency in `pubspec.yaml`.
-- The Phase 1 proposal plans local storage with `sqflite`, state management with Provider or `ChangeNotifier`, and possibly `flutter_local_notifications` for reminders. These are plans, not confirmed installed dependencies. Update this section when the team chooses and adds packages.
+
+- The Phase 1 proposal plans local storage with `sqflite`, state management with Provider or `ChangeNotifier`, and possibly `flutter_local_notifications` for reminders. These are plans, not confirmed installed dependencies. 
 
 ## Repository
 
@@ -61,8 +61,8 @@ Folders may be added as the design is implemented. Remove any unused placeholder
 
 ## Verification
 
-On the current setup, `flutter pub get` completed, `flutter analyze` reported no issues, and `flutter run -d chrome` launched the app. Android setup has not been verified; see `flutter doctor` for the local Android SDK status.
+On the current setup, `flutter pub get` completed, `flutter analyze` reported no issues, and `flutter run -d chrome` launched the app. 
 
 ## References and assets
 
-The Phase 1 proposal identifies Flutter, Dart, and possible packages listed above. Add the source and license for any external images, icons, code, or datasets used in the app. Record the exact package versions selected in `pubspec.yaml`.
+The Phase 1 proposal identifies Flutter, Dart, and possible packages listed above.
