@@ -1,6 +1,6 @@
 # Shayek “ Smart Trip Packing Assistant
 
-**SWE463 Â· Group 03**
+**SWE463 · Group 03**
 
 Shayek is a Flutter app proposal for helping individuals and families prepare for trips with organized, reusable packing lists. The app is intended to generate a suggested checklist from trip details, let users manage and mark items as packed, and save lists as templates.
 
@@ -42,8 +42,8 @@ Folders may be added as the design is implemented. Remove any unused placeholder
 
 ## Technology and packages
 
-- **Flutter and Dart** â€” app framework and language.
-- **cupertino_icons** â€” icon font for Cupertino-style icons; version 1.0.9 was resolved in the current setup. Keep this listed only if it remains a direct dependency in `pubspec.yaml`.
+- **Flutter and Dart** ” app framework and language.
+- **cupertino_icons** ” icon font for Cupertino-style icons; version 1.0.9 was resolved in the current setup. Keep this listed only if it remains a direct dependency in `pubspec.yaml`.
 - The Phase 1 proposal plans local storage with `sqflite`, state management with Provider or `ChangeNotifier`, and possibly `flutter_local_notifications` for reminders. These are plans, not confirmed installed dependencies. Update this section when the team chooses and adds packages.
 
 ## Repository
