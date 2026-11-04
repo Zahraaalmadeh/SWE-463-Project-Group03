@@ -33,13 +33,12 @@ The priority features are Trip Creation, Generated Packing Checklist, Checklist 
 - Material 3 application theme and a clean Flutter project structure.
 - Named routes for all six planned screens.
 - Home/Templates bottom-navigation shell with selected-tab behavior.
-- A temporary Home placeholder; the final Home UI is intentionally not implemented.
-- Page-name-only route placeholders for Home, Create Trip, Checklist, Templates, Family Members, and Return Checklist.
+- A Home placeholder containing only a Create Trip link; the final Home UI is intentionally not implemented.
+- Empty route placeholder files for Create Trip, Checklist, Templates, Family Members, and Return Checklist.
 - Reachable placeholder screens for checklist, templates, family members, and return checklist.
 - Null-safe base models for `Trip`, `PackingItem`, `PackingTemplate`, and `TemplateItem`.
 - `TripProvider`, `ChecklistProvider`, and `TemplateProvider` registered through `MultiProvider`.
 - Local SQLite database initialization and tables for `trips`, `travelers`, `packing_items`, `templates`, and `template_items`.
-- Reusable `EmptyState`, `TripCard`, and `ChecklistItemTile` widgets ready for later screens.
 
 ## Intentionally unfinished
 
@@ -105,9 +104,8 @@ flutter analyze
 
 - `/` opens the Home tab.
 - Home can open `/create-trip`.
-- The Create Trip placeholder links to `/checklist` with replacement navigation; Back returns to the tab that opened it.
-- Checklist can open `/templates`, `/family`, and `/return-checklist`.
-- Templates can open `/create-trip`.
+- Home can open `/create-trip`.
+- The remaining named routes are registered and ready for their feature owners to connect.
 - Home and Templates are available through the bottom navigation bar.
 - AppBar Back buttons and system Back return to the preceding route.
 

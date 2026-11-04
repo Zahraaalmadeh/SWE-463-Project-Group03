@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../app_routes.dart';
-
-/// Phase 3 route placeholder; trip fields will be implemented later.
+/// Placeholder owned by the Create Trip feature team.
 class CreateTripScreen extends StatelessWidget {
   const CreateTripScreen({super.key});
 
@@ -10,15 +8,7 @@ class CreateTripScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Create Trip')),
-      body: ListView(
-        children: [
-          ListTile(
-            title: const Text('Packing Checklist'),
-            onTap: () =>
-                Navigator.of(context).pushReplacementNamed(AppRoutes.checklist),
-          ),
-        ],
-      ),
+      body: const SizedBox.shrink(),
     );
   }
 }

@@ -8,9 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:shayek/app_routes.dart';
 import 'package:shayek/main.dart';
-import 'package:shayek/screens/navigation_shell.dart';
 
 void main() {
   testWidgets('Shayek app loads smoke test', (tester) async {
@@ -20,7 +18,7 @@ void main() {
     expect(find.text('Create Trip'), findsOneWidget);
   });
 
-  testWidgets('named routes and main tabs are reachable', (tester) async {
+  testWidgets('Home, Create Trip, and Templates are reachable', (tester) async {
     await tester.pumpWidget(const ShayekApp());
 
     await tester.tap(find.text('Templates'));
@@ -31,31 +29,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.widgetWithText(AppBar, 'Home'), findsOneWidget);
 
-    final context = tester.element(find.byType(NavigationShell));
-    final navigator = Navigator.of(context);
-
-    navigator.pushNamed(AppRoutes.createTrip);
+    await tester.tap(find.text('Create Trip'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(AppBar, 'Create Trip'), findsOneWidget);
-
-    navigator.pushNamed(AppRoutes.checklist);
-    await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Packing Checklist'), findsOneWidget);
-
-    await tester.tap(find.text('Family Members'));
-    await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Family Members'), findsOneWidget);
-    navigator.pop();
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Return Checklist'));
-    await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Return Checklist'), findsOneWidget);
-    navigator.pop();
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Templates'));
-    await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Templates'), findsOneWidget);
   });
 }

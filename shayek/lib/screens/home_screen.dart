@@ -16,19 +16,6 @@ class HomeScreen extends StatelessWidget {
             title: const Text('Create Trip'),
             onTap: () => Navigator.of(context).pushNamed(AppRoutes.createTrip),
           ),
-          ListTile(
-            title: const Text('Packing Checklist'),
-            onTap: () => Navigator.of(context).pushNamed(AppRoutes.checklist),
-          ),
-          ListTile(
-            title: const Text('Family Members'),
-            onTap: () => Navigator.of(context).pushNamed(AppRoutes.family),
-          ),
-          ListTile(
-            title: const Text('Return Checklist'),
-            onTap: () =>
-                Navigator.of(context).pushNamed(AppRoutes.returnChecklist),
-          ),
         ],
       ),
     );
