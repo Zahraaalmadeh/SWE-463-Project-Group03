@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const ShayekApp());
+  runApp(const MyApp());
 }
 
 const green = Color(0xFF185C45);
 const pageBackground = Color(0xFFF8F8F4);
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShayekApp();
+  }
+}
 
 class ShayekApp extends StatelessWidget {
   const ShayekApp({super.key});
