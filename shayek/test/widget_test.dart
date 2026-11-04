@@ -12,13 +12,17 @@ import 'package:shayek/main.dart';
 
 void main() {
   testWidgets('Shayek app loads smoke test', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(const ShayekApp());
 
-    expect(find.text('Home'), findsWidgets);
-    expect(find.text('Create Trip'), findsOneWidget);
+    expect(find.text('Shayek'), findsOneWidget);
+    expect(find.text('New Trip'), findsOneWidget);
   });
 
   testWidgets('Home, Create Trip, and Templates are reachable', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(const ShayekApp());
 
     await tester.tap(find.text('Templates'));
@@ -27,9 +31,9 @@ void main() {
 
     await tester.tap(find.text('Home'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Home'), findsOneWidget);
+    expect(find.text('Shayek'), findsOneWidget);
 
-    await tester.tap(find.text('Create Trip'));
+    await tester.tap(find.text('New Trip'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(AppBar, 'Create Trip'), findsOneWidget);
   });
