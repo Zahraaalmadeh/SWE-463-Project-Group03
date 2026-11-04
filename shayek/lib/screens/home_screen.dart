@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../app_routes.dart';
-import '../widgets/empty_state.dart';
 
 /// Temporary Phase 3 Home placeholder; the final Home design is not included.
 class HomeScreen extends StatelessWidget {
@@ -11,15 +10,26 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
-      body: EmptyState(
-        icon: Icons.luggage_outlined,
-        message: 'Your trips will appear here.',
-        action: FilledButton.icon(
-          onPressed: () =>
-              Navigator.of(context).pushNamed(AppRoutes.createTrip),
-          icon: const Icon(Icons.add),
-          label: const Text('Create trip'),
-        ),
+      body: ListView(
+        children: [
+          ListTile(
+            title: const Text('Create Trip'),
+            onTap: () => Navigator.of(context).pushNamed(AppRoutes.createTrip),
+          ),
+          ListTile(
+            title: const Text('Packing Checklist'),
+            onTap: () => Navigator.of(context).pushNamed(AppRoutes.checklist),
+          ),
+          ListTile(
+            title: const Text('Family Members'),
+            onTap: () => Navigator.of(context).pushNamed(AppRoutes.family),
+          ),
+          ListTile(
+            title: const Text('Return Checklist'),
+            onTap: () =>
+                Navigator.of(context).pushNamed(AppRoutes.returnChecklist),
+          ),
+        ],
       ),
     );
   }

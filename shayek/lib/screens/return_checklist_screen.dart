@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../widgets/empty_state.dart';
-
 /// Phase 4 placeholder for the leaving-accommodation checklist and reminder.
 class ReturnChecklistScreen extends StatelessWidget {
   const ReturnChecklistScreen({super.key});
@@ -10,10 +8,7 @@ class ReturnChecklistScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Return Checklist')),
-      body: const EmptyState(
-        icon: Icons.assignment_return_outlined,
-        message: 'The return checklist and reminders are planned for Phase 4.',
-      ),
+      body: const SizedBox.shrink(),
     );
   }
 }

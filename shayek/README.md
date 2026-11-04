@@ -34,7 +34,7 @@ The priority features are Trip Creation, Generated Packing Checklist, Checklist 
 - Named routes for all six planned screens.
 - Home/Templates bottom-navigation shell with selected-tab behavior.
 - A temporary Home placeholder; the final Home UI is intentionally not implemented.
-- A temporary Create Trip form with basic validation and a route to the checklist after valid submission.
+- Page-name-only route placeholders for Home, Create Trip, Checklist, Templates, Family Members, and Return Checklist.
 - Reachable placeholder screens for checklist, templates, family members, and return checklist.
 - Null-safe base models for `Trip`, `PackingItem`, `PackingTemplate`, and `TemplateItem`.
 - `TripProvider`, `ChecklistProvider`, and `TemplateProvider` registered through `MultiProvider`.
@@ -46,7 +46,7 @@ The priority features are Trip Creation, Generated Packing Checklist, Checklist 
 - Trips, checklist items, templates, and travelers are not yet saved or loaded in the UI.
 - Checklist generation, checklist CRUD, categorization, packed-state updates, and progress tracking are not implemented yet.
 - Saving, editing, deleting, and applying templates are not implemented yet.
-- The Create Trip form validates and navigates, but it does not persist a trip or generate items yet.
+- Trip creation fields and validation are not implemented yet; the Create Trip page only links to the checklist route.
 - The final Home page design is intentionally deferred for review.
 - Family Members and Return Checklist are basic navigable placeholders planned for **Phase 4**. Return reminders and notifications are also deferred; no notification package is included.
 
@@ -105,7 +105,7 @@ flutter analyze
 
 - `/` opens the Home tab.
 - Home can open `/create-trip`.
-- A valid Create Trip submission replaces the form with `/checklist`; Back returns to the tab that opened the form.
+- The Create Trip placeholder links to `/checklist` with replacement navigation; Back returns to the tab that opened it.
 - Checklist can open `/templates`, `/family`, and `/return-checklist`.
 - Templates can open `/create-trip`.
 - Home and Templates are available through the bottom navigation bar.

@@ -17,7 +17,7 @@ void main() {
     await tester.pumpWidget(const ShayekApp());
 
     expect(find.text('Home'), findsWidgets);
-    expect(find.text('Create trip'), findsOneWidget);
+    expect(find.text('Create Trip'), findsOneWidget);
   });
 
   testWidgets('named routes and main tabs are reachable', (tester) async {
@@ -42,19 +42,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.widgetWithText(AppBar, 'Packing Checklist'), findsOneWidget);
 
-    await tester.tap(find.text('Family members'));
+    await tester.tap(find.text('Family Members'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(AppBar, 'Family Members'), findsOneWidget);
     navigator.pop();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Return checklist'));
+    await tester.tap(find.text('Return Checklist'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(AppBar, 'Return Checklist'), findsOneWidget);
     navigator.pop();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Save as template'));
+    await tester.tap(find.text('Templates'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(AppBar, 'Templates'), findsOneWidget);
   });
