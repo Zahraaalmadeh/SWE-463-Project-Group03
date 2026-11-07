@@ -1,32 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../app_routes.dart';
+import '../models/trip.dart';
+import '../providers/trip_provider.dart';
 import '../widgets/home_trip_card.dart';
 
-/// Desktop-sized Home UI for the Phase 3 design. The trip data is temporary display data.
-class HomeScreen extends StatelessWidget {
+const _monthNames = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+/// Gradient placeholders cycled by trip index until real trip photos exist.
+const _cardGradients = [
+  [Color(0xFF93A49B), Color(0xFF456B61), Color(0xFF193A38)],
+  [Color(0xFF6E9187), Color(0xFF385C50), Color(0xFF172F2D)],
+];
+
+/// Desktop-sized Home UI for the Phase 3 design.
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  static const _trips = [
-    HomeTrip(
-      name: 'Amalfi Coast',
-      type: 'Beach',
-      date: 'Nov 6, 2026',
-      duration: '7 days',
-      travelers: '2',
-      progress: 0.64,
-      colors: [Color(0xFF93A49B), Color(0xFF456B61), Color(0xFF193A38)],
-    ),
-    HomeTrip(
-      name: 'Banff Lakes',
-      type: 'Camping',
-      date: 'Dec 12, 2026',
-      duration: '3 days',
-      travelers: '2',
-      progress: 0.28,
-      colors: [Color(0xFF6E9187), Color(0xFF385C50), Color(0xFF172F2D)],
-    ),
-  ];
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Home triggers the initial load; TripProvider owns the database call so
+    // this screen never touches SQLite itself. The call is deferred until
+    // after the first frame because loadTrips() calls notifyListeners()
+    // immediately (to show the loading state), and doing that synchronously
+    // inside initState would mark the provider dirty while the widget tree
+    // is still being built.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<TripProvider>().loadTrips();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,59 +60,207 @@ class HomeScreen extends StatelessWidget {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1080),
-            child: ListView(
+            child: Padding(
               padding: const EdgeInsets.fromLTRB(40, 32, 40, 40),
-              children: [
-                const _BrandHeader(),
-                const SizedBox(height: 40),
-                const _HomeHeaderRow(),
-                const SizedBox(height: 48),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Upcoming Trips',
-                      style: TextStyle(
-                        color: Color(0xFF1A2925),
-                        fontFamily: 'Georgia',
-                        fontSize: 26,
-                        fontWeight: FontWeight.w600,
-                      ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _BrandHeader(),
+                  const SizedBox(height: 40),
+                  const _HomeHeaderRow(),
+                  const SizedBox(height: 48),
+                  // Consumer rebuilds only this section when TripProvider calls
+                  // notifyListeners(), so the list stays in sync automatically
+                  // whenever trips are loaded, added, or removed.
+                  Expanded(
+                    child: Consumer<TripProvider>(
+                      builder: (context, tripProvider, _) {
+                        if (tripProvider.isLoading) {
+                          return const _LoadingState();
+                        }
+                        if (tripProvider.errorMessage != null) {
+                          return _ErrorState(
+                            message: tripProvider.errorMessage!,
+                          );
+                        }
+                        if (tripProvider.trips.isEmpty) {
+                          return const _EmptyState();
+                        }
+                        return _TripList(trips: tripProvider.trips);
+                      },
                     ),
-                    Text(
-                      '${_trips.length} trips',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF607168),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    const spacing = 24.0;
-                    final isWide = constraints.maxWidth >= 640;
-                    final cardWidth = isWide
-                        ? (constraints.maxWidth - spacing) / 2
-                        : constraints.maxWidth;
-                    return Wrap(
-                      spacing: spacing,
-                      runSpacing: spacing,
-                      children: [
-                        for (final trip in _trips)
-                          SizedBox(
-                            width: cardWidth,
-                            child: HomeTripCard(trip: trip),
-                          ),
-                      ],
-                    );
-                  },
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TripList extends StatelessWidget {
+  const _TripList({required this.trips});
+
+  final List<Trip> trips;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Upcoming Trips',
+              style: TextStyle(
+                color: Color(0xFF1A2925),
+                fontFamily: 'Georgia',
+                fontSize: 26,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              '${trips.length} trip${trips.length == 1 ? '' : 's'}',
+              style: const TextStyle(fontSize: 15, color: Color(0xFF607168)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const spacing = 24.0;
+            final isWide = constraints.maxWidth >= 640;
+            final cardWidth = isWide
+                ? (constraints.maxWidth - spacing) / 2
+                : constraints.maxWidth;
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: [
+                for (final (index, trip) in trips.indexed)
+                  SizedBox(
+                    width: cardWidth,
+                    child: HomeTripCard(trip: _toHomeTrip(trip, index)),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  /// Adapts the persisted [Trip] into the card's display model. Packing
+  /// progress needs the checklist data (out of scope for this feature), so it
+  /// is shown as 0% until Checklist is wired up.
+  HomeTrip _toHomeTrip(Trip trip, int index) {
+    final date = trip.departureDate;
+    return HomeTrip(
+      name: trip.name,
+      type: _typeLabel(trip.type),
+      date: '${_monthNames[date.month - 1]} ${date.day}, ${date.year}',
+      duration: '${trip.durationDays} day${trip.durationDays == 1 ? '' : 's'}',
+      travelers: '${trip.travelerCount}',
+      progress: 0,
+      colors: _cardGradients[index % _cardGradients.length],
+    );
+  }
+
+  String _typeLabel(TripType type) {
+    final name = type.name;
+    return name[0].toUpperCase() + name.substring(1);
+  }
+}
+
+class _LoadingState extends StatelessWidget {
+  const _LoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: CircularProgressIndicator(color: Color(0xFF436C5B)),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.error_outline, color: Color(0xFF436C5B), size: 48),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: Color(0xFF607168)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE7EEE8),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.luggage_outlined,
+              color: Color(0xFF436C5B),
+              size: 34,
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Your next adventure starts here',
+            style: TextStyle(
+              color: Color(0xFF1A2925),
+              fontFamily: 'Georgia',
+              fontSize: 22,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Create your first trip and Shayek will build a smart\npacking list tailored for it.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Color(0xFF607168)),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: () =>
+                Navigator.of(context).pushNamed(AppRoutes.createTrip),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF436C5B),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Text('Create Trip'),
+          ),
+        ],
       ),
     );
   }
