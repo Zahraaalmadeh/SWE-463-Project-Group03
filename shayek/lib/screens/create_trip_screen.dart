@@ -12,7 +12,7 @@ class CreateTripScreen extends StatefulWidget {
 
 class _CreateTripScreenState extends State<CreateTripScreen> {
   final _nameController = TextEditingController();
-  final TripType _selectedType = TripType.beach;
+  TripType _selectedType = TripType.beach;
   final int _durationDays = 5;
   final int _travelerCount = 2;
   final DateTime? _departureDate = null;
@@ -53,7 +53,11 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                       ),
                       const SizedBox(height: 28),
                       const _FieldLabel('Trip type'),
-                      _TripTypeGrid(selected: _selectedType),
+                      _TripTypeGrid(
+                        selected: _selectedType,
+                        onSelected: (type) =>
+                            setState(() => _selectedType = type),
+                      ),
                       const SizedBox(height: 28),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,9 +270,10 @@ const _tripTypeOptions = [
 ];
 
 class _TripTypeGrid extends StatelessWidget {
-  const _TripTypeGrid({required this.selected});
+  const _TripTypeGrid({required this.selected, required this.onSelected});
 
   final TripType selected;
+  final ValueChanged<TripType> onSelected;
 
   static const _columns = 3;
   static const _gap = 12.0;
@@ -288,6 +293,7 @@ class _TripTypeGrid extends StatelessWidget {
                 child: _TripTypeTile(
                   option: rowOptions[i],
                   selected: rowOptions[i].type == selected,
+                  onTap: () => onSelected(rowOptions[i].type),
                 ),
               ),
             ],
@@ -300,10 +306,15 @@ class _TripTypeGrid extends StatelessWidget {
 }
 
 class _TripTypeTile extends StatelessWidget {
-  const _TripTypeTile({required this.option, required this.selected});
+  const _TripTypeTile({
+    required this.option,
+    required this.selected,
+    required this.onTap,
+  });
 
   final _TripTypeOption option;
   final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -312,19 +323,21 @@ class _TripTypeTile extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      child: Material(
-        color: selected ? _Palette.selectedFill : _Palette.surface,
-        shape: RoundedRectangleBorder(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        height: 84,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: selected ? _Palette.selectedFill : _Palette.surface,
           borderRadius: BorderRadius.circular(_radius),
-          side: BorderSide(
+          border: Border.all(
             color: selected ? _Palette.primary : _Palette.border,
           ),
         ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: null,
-          child: SizedBox(
-            height: 84,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
             child: IconTheme(
               data: IconThemeData(color: foreground, size: 24),
               child: Column(
