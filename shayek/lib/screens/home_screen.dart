@@ -131,6 +131,8 @@ class _TripList extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             const spacing = 24.0;
+            // 640 is roughly two card-widths' worth of room; below it a
+            // single column reads better than two cramped columns.
             final isWide = constraints.maxWidth >= 640;
             final cardWidth = isWide
                 ? (constraints.maxWidth - spacing) / 2
@@ -142,7 +144,10 @@ class _TripList extends StatelessWidget {
                 for (final (index, trip) in trips.indexed)
                   SizedBox(
                     width: cardWidth,
-                    child: HomeTripCard(trip: _toHomeTrip(trip, index)),
+                    child: HomeTripCard(
+                      trip: _toHomeTrip(trip, index),
+                      onTap: () => _openChecklist(context, trip),
+                    ),
                   ),
               ],
             );
@@ -150,6 +155,13 @@ class _TripList extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  /// Opens the tapped trip's checklist. ChecklistScreen takes the trip as its
+  /// route argument and selects it on ChecklistProvider itself, the same way
+  /// Create Trip's "Generate Packing List" opens it.
+  void _openChecklist(BuildContext context, Trip trip) {
+    Navigator.of(context).pushNamed(AppRoutes.checklist, arguments: trip);
   }
 
   /// Adapts the persisted [Trip] into the card's display model. Packing
@@ -192,19 +204,37 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, color: Color(0xFF436C5B), size: 48),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: Color(0xFF607168)),
+    // Same scroll-when-short, center-when-roomy pattern as _EmptyState, so
+    // this content never overflows on a small window either.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Color(0xFF436C5B),
+                    size: 48,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF607168),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -214,54 +244,73 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE7EEE8),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Icon(
-              Icons.luggage_outlined,
-              color: Color(0xFF436C5B),
-              size: 34,
+    // LayoutBuilder + a min-height ConstrainedBox lets this content center
+    // itself when there's room, and scroll instead of overflowing when the
+    // window is too short to fit it (e.g. a small macOS window).
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(child: _EmptyStateContent()),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _EmptyStateContent extends StatelessWidget {
+  const _EmptyStateContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE7EEE8),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Icon(
+            Icons.luggage_outlined,
+            color: Color(0xFF436C5B),
+            size: 34,
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          'Your next adventure starts here',
+          style: TextStyle(
+            color: Color(0xFF1A2925),
+            fontFamily: 'Georgia',
+            fontSize: 22,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Create your first trip and Shayek will build a smart\npacking list tailored for it.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: Color(0xFF607168)),
+        ),
+        const SizedBox(height: 24),
+        FilledButton(
+          onPressed: () =>
+              Navigator.of(context).pushNamed(AppRoutes.createTrip),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF436C5B),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
             ),
           ),
-          const SizedBox(height: 20),
-          const Text(
-            'Your next adventure starts here',
-            style: TextStyle(
-              color: Color(0xFF1A2925),
-              fontFamily: 'Georgia',
-              fontSize: 22,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Create your first trip and Shayek will build a smart\npacking list tailored for it.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Color(0xFF607168)),
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: () =>
-                Navigator.of(context).pushNamed(AppRoutes.createTrip),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF436C5B),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            child: const Text('Create Trip'),
-          ),
-        ],
-      ),
+          child: const Text('Create Trip'),
+        ),
+      ],
     );
   }
 }
@@ -274,6 +323,8 @@ class _HomeHeaderRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
+        // "Sara" is a placeholder: there's no auth/user profile yet, so this
+        // isn't reading a real signed-in name.
         const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

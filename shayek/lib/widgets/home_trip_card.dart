@@ -22,9 +22,13 @@ class HomeTrip {
 
 /// Reusable trip card used only by the Home page.
 class HomeTripCard extends StatelessWidget {
-  const HomeTripCard({super.key, required this.trip});
+  const HomeTripCard({super.key, required this.trip, this.onTap});
 
   final HomeTrip trip;
+
+  /// Null disables the tap (InkWell just shows no ripple); Home always
+  /// passes a callback that opens that trip's Checklist.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -34,60 +38,63 @@ class HomeTripCard extends StatelessWidget {
       shadowColor: const Color(0xFF436C5B).withValues(alpha: 0.18),
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Column(
-        children: [
-          _TripImagePlaceholder(trip: trip),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    _TripDetail(
-                      icon: Icons.calendar_today_outlined,
-                      text: trip.date,
-                    ),
-                    const SizedBox(width: 16),
-                    _TripDetail(
-                      icon: Icons.access_time_outlined,
-                      text: trip.duration,
-                    ),
-                    const SizedBox(width: 16),
-                    _TripDetail(
-                      icon: Icons.people_outline,
-                      text: trip.travelers,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: LinearProgressIndicator(
-                          value: trip.progress,
-                          minHeight: 8,
-                          backgroundColor: const Color(0xFFDCE9E1),
-                          color: const Color(0xFF436C5B),
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          children: [
+            _TripImagePlaceholder(trip: trip),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      _TripDetail(
+                        icon: Icons.calendar_today_outlined,
+                        text: trip.date,
+                      ),
+                      const SizedBox(width: 16),
+                      _TripDetail(
+                        icon: Icons.access_time_outlined,
+                        text: trip.duration,
+                      ),
+                      const SizedBox(width: 16),
+                      _TripDetail(
+                        icon: Icons.people_outline,
+                        text: trip.travelers,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: LinearProgressIndicator(
+                            value: trip.progress,
+                            minHeight: 8,
+                            backgroundColor: const Color(0xFFDCE9E1),
+                            color: const Color(0xFF436C5B),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '${(trip.progress * 100).round()}%',
-                      style: const TextStyle(
-                        color: Color(0xFF436C5B),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(width: 12),
+                      Text(
+                        '${(trip.progress * 100).round()}%',
+                        style: const TextStyle(
+                          color: Color(0xFF436C5B),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

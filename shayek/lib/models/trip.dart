@@ -29,6 +29,7 @@ class Trip {
       durationDays: map['duration_days']! as int,
       departureDate: DateTime.parse(map['departure_date']! as String),
       travelerCount: map['traveler_count']! as int,
+      // SQLite has no boolean type; the column stores 0/1.
       reminderEnabled: (map['reminder_enabled'] as int? ?? 0) != 0,
       reminderTime: reminderTime == null ? null : DateTime.parse(reminderTime),
     );

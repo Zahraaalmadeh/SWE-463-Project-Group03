@@ -26,6 +26,9 @@ class DatabaseService {
       databasePath,
       version: _databaseVersion,
       onConfigure: (database) async {
+        // SQLite ignores FOREIGN KEY constraints unless this is set per
+        // connection; without it, the ON DELETE CASCADE clauses below
+        // (travelers/packing_items/template_items) silently do nothing.
         await database.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _createTables,
