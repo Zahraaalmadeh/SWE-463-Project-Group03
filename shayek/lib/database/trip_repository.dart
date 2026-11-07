@@ -35,8 +35,9 @@ class SqfliteTripRepository implements TripRepository {
 
   @override
   Future<List<Trip>> getTrips() async {
-    final database = await _databaseService.database;
-    final rows = await database.query(_table, orderBy: 'departure_date ASC');
+    // DatabaseService owns the query (soonest departure first); this layer
+    // only maps the raw rows to models.
+    final rows = await _databaseService.getTrips();
     return rows.map(Trip.fromMap).toList();
   }
 

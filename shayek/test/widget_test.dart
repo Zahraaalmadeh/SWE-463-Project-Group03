@@ -50,6 +50,6 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Back'));
     await tester.pumpAndSettle();
     expect(find.text('Where are you headed?'), findsNothing);
-    expect(find.text('Upcoming Trips'), findsOneWidget);
+    expect(find.text('Ready for your next adventure?'), findsOneWidget);
   });
 }

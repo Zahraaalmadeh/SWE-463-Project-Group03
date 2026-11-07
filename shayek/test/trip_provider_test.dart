@@ -150,10 +150,12 @@ void main() {
         throwsException,
       );
       expect(provider.trips, isEmpty);
-      expect(provider.errorMessage, 'Could not save your trip.');
+      // Home renders errorMessage in place of the trip list, so a failed
+      // save must not set it; the caller handles the thrown error.
+      expect(provider.errorMessage, isNull);
 
       await provider.loadTrips();
-      expect(provider.errorMessage, 'Could not load your trips.');
+      expect(provider.errorMessage, 'Could not load trips. Please try again.');
       expect(provider.isLoading, isFalse);
     });
   });

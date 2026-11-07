@@ -12,7 +12,10 @@ class Trip {
     this.reminderTime,
   });
 
-  /// Rebuilds a trip from a row of the `trips` table.
+  /// Builds a [Trip] from a raw `trips` table row (see DatabaseService.getTrips).
+  ///
+  /// An unrecognised stored type falls back to [TripType.other] instead of
+  /// throwing, so one bad row cannot break the whole trip list.
   factory Trip.fromMap(Map<String, Object?> map) {
     final typeName = map['type']! as String;
     final reminderTime = map['reminder_time'] as String?;
@@ -26,7 +29,7 @@ class Trip {
       durationDays: map['duration_days']! as int,
       departureDate: DateTime.parse(map['departure_date']! as String),
       travelerCount: map['traveler_count']! as int,
-      reminderEnabled: (map['reminder_enabled'] as int? ?? 0) == 1,
+      reminderEnabled: (map['reminder_enabled'] as int? ?? 0) != 0,
       reminderTime: reminderTime == null ? null : DateTime.parse(reminderTime),
     );
   }

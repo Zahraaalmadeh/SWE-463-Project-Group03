@@ -34,6 +34,14 @@ class DatabaseService {
     return database;
   }
 
+  /// Returns every row of the `trips` table, soonest departure first.
+  /// Providers turn these raw rows into `Trip` objects; this service stays
+  /// unaware of the domain models.
+  Future<List<Map<String, Object?>>> getTrips() async {
+    final db = await database;
+    return db.query('trips', orderBy: 'departure_date ASC');
+  }
+
   Future<void> _createTables(Database database, int version) async {
     await database.execute('''
       CREATE TABLE trips(
