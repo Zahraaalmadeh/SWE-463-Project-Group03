@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import '../models/trip.dart';
+import '../providers/trip_provider.dart';
 
 /// Collects the details of a new trip before its packing list is generated.
 class CreateTripScreen extends StatefulWidget {
@@ -27,6 +29,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   DateTime? _departureDate;
   String? _nameError;
   String? _dateError;
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -132,7 +135,10 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                  child: _GenerateButton(onPressed: _submit),
+                  child: _GenerateButton(
+                    isLoading: _isSaving,
+                    onPressed: _isSaving ? null : _submit,
+                  ),
                 ),
               ],
             ),
@@ -219,13 +225,39 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         travelersValid;
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_validate()) {
       _revealFirstError();
       return;
     }
-    // Saving the validated trip is added with trip persistence.
+
+    setState(() => _isSaving = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      final trip = await context.read<TripProvider>().createTrip(
+        name: _nameController.text,
+        type: _selectedType,
+        durationDays: _durationDays,
+        departureDate: _departureDate!,
+        travelerCount: _travelerCount,
+      );
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('"${trip.name}" was saved.')),
+      );
+      navigator.pop(trip);
+    } catch (error) {
+      debugPrint('Failed to create trip: $error');
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Could not save your trip. Please try again.'),
+        ),
+      );
+    }
   }
 
   InputDecoration _inputDecoration({String? errorText}) {
@@ -726,8 +758,9 @@ class _DateField extends StatelessWidget {
 }
 
 class _GenerateButton extends StatelessWidget {
-  const _GenerateButton({required this.onPressed});
+  const _GenerateButton({required this.isLoading, required this.onPressed});
 
+  final bool isLoading;
   final VoidCallback? onPressed;
 
   @override
@@ -737,7 +770,15 @@ class _GenerateButton extends StatelessWidget {
       height: 56,
       child: FilledButton.icon(
         onPressed: onPressed,
-        icon: const Icon(Icons.auto_awesome_outlined, size: 22),
+        icon: isLoading
+            ? const SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  color: Colors.white,
+                ),
+              )
+            : const Icon(Icons.auto_awesome_outlined, size: 22),
         label: const Text('Generate Packing List'),
         style: FilledButton.styleFrom(
           backgroundColor: _Palette.primary,

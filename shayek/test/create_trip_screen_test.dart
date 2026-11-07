@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:shayek/models/trip.dart';
+import 'package:shayek/providers/trip_provider.dart';
 import 'package:shayek/screens/create_trip_screen.dart';
+
+import 'fakes/in_memory_trip_repository.dart';
 
 /// Typical phone viewport so layout issues surface at mobile sizes.
 const _phoneSize = Size(390, 844);
@@ -9,6 +14,54 @@ Future<void> _pumpScreen(WidgetTester tester) async {
   await tester.binding.setSurfaceSize(_phoneSize);
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(const MaterialApp(home: CreateTripScreen()));
+}
+
+/// Opens the screen from a launcher route, as Home does, so that leaving the
+/// screen can be observed.
+Future<TripProvider> _pumpFromLauncher(
+  WidgetTester tester,
+  InMemoryTripRepository repository, {
+  void Function(Object? result)? onResult,
+}) async {
+  await tester.binding.setSurfaceSize(_phoneSize);
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  final provider = TripProvider(repository: repository);
+  await tester.pumpWidget(
+    ChangeNotifierProvider.value(
+      value: provider,
+      child: MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () async {
+                final result = await Navigator.of(context).push<Object?>(
+                  MaterialPageRoute(builder: (_) => const CreateTripScreen()),
+                );
+                onResult?.call(result);
+              },
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.tap(find.text('Open'));
+  await tester.pumpAndSettle();
+  return provider;
+}
+
+Future<void> _fillValidTrip(WidgetTester tester) async {
+  await tester.enterText(find.byType(TextField), 'Summer in Santorini');
+  await tester.tap(find.text('Family'));
+  await tester.tap(find.byTooltip('Increase Travelers'));
+  await tester.pump();
+  await tester.ensureVisible(find.text('mm/dd/yyyy'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('mm/dd/yyyy'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('OK'));
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -195,5 +248,61 @@ void main() {
 
     final field = tester.widget<TextField>(find.byType(TextField));
     expect(field.controller!.text.length, CreateTripScreen.maxNameLength);
+  });
+
+  testWidgets('a valid trip is saved with the entered details', (tester) async {
+    final repository = InMemoryTripRepository();
+    Object? result;
+    final provider = await _pumpFromLauncher(
+      tester,
+      repository,
+      onResult: (value) => result = value,
+    );
+
+    await _fillValidTrip(tester);
+    await tester.tap(find.text('Generate Packing List'));
+    await tester.pumpAndSettle();
+
+    expect(repository.rows, hasLength(1));
+    final saved = provider.trips.single;
+    expect(saved.name, 'Summer in Santorini');
+    expect(saved.type, TripType.family);
+    expect(saved.durationDays, 5);
+    expect(saved.travelerCount, 3);
+    final now = DateTime.now();
+    expect(saved.departureDate, DateTime(now.year, now.month, now.day));
+
+    expect(find.text('Where are you headed?'), findsNothing);
+    expect(result, isA<Trip>());
+    expect(find.text('"Summer in Santorini" was saved.'), findsOneWidget);
+  });
+
+  testWidgets('invalid input never reaches the database', (tester) async {
+    final repository = InMemoryTripRepository();
+    await _pumpFromLauncher(tester, repository);
+
+    await tester.tap(find.text('Generate Packing List'));
+    await tester.pumpAndSettle();
+
+    expect(repository.rows, isEmpty);
+    expect(find.text('Where are you headed?'), findsOneWidget);
+  });
+
+  testWidgets('a save failure keeps the user on the form', (tester) async {
+    final repository = InMemoryTripRepository()
+      ..failWith = Exception('database unavailable');
+    await _pumpFromLauncher(tester, repository);
+
+    await _fillValidTrip(tester);
+    await tester.tap(find.text('Generate Packing List'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Where are you headed?'), findsOneWidget);
+    expect(
+      find.text('Could not save your trip. Please try again.'),
+      findsOneWidget,
+    );
+    final button = tester.widget<FilledButton>(find.byType(FilledButton));
+    expect(button.onPressed, isNotNull);
   });
 }
