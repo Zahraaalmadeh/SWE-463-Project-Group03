@@ -37,4 +37,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Where are you headed?'), findsOneWidget);
   });
+
+  testWidgets('Create Trip back button returns to Home', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(const ShayekApp());
+
+    await tester.tap(find.text('New Trip'));
+    await tester.pumpAndSettle();
+    expect(find.text('Where are you headed?'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Back'));
+    await tester.pumpAndSettle();
+    expect(find.text('Where are you headed?'), findsNothing);
+    expect(find.text('Upcoming Trips'), findsOneWidget);
+  });
 }

@@ -198,10 +198,15 @@ class _BackButton extends StatelessWidget {
         shape: const CircleBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: null,
+          onTap: () => Navigator.of(context).maybePop(),
           child: const SizedBox.square(
             dimension: 44,
-            child: Icon(Icons.arrow_back, color: _Palette.ink, size: 22),
+            child: Icon(
+              Icons.arrow_back,
+              color: _Palette.ink,
+              size: 22,
+              semanticLabel: 'Back',
+            ),
           ),
         ),
       ),
