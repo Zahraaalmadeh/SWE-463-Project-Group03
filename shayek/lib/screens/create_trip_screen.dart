@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -399,11 +401,7 @@ class _TripTypeOption {
 }
 
 const _tripTypeOptions = [
-  _TripTypeOption(
-    TripType.beach,
-    'Beach',
-    Icon(Icons.umbrella_outlined, size: 24),
-  ),
+  _TripTypeOption(TripType.beach, 'Beach', _BeachUmbrellaIcon()),
   _TripTypeOption(
     TripType.business,
     'Business',
@@ -523,6 +521,20 @@ class _TripTypeTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Material's open beach umbrella is drawn tilted; stand it upright to match
+/// the design.
+class _BeachUmbrellaIcon extends StatelessWidget {
+  const _BeachUmbrellaIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: math.pi / 4,
+      child: const Icon(Icons.beach_access_outlined),
     );
   }
 }
