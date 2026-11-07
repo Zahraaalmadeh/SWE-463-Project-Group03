@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shayek/app_routes.dart';
 import 'package:shayek/models/trip.dart';
+import 'package:shayek/providers/checklist_provider.dart';
 import 'package:shayek/providers/trip_provider.dart';
+import 'package:shayek/screens/checklist_screen.dart';
 import 'package:shayek/screens/create_trip_screen.dart';
 
 import 'fakes/in_memory_trip_repository.dart';
@@ -20,25 +23,25 @@ Future<void> _pumpScreen(WidgetTester tester) async {
 /// screen can be observed.
 Future<TripProvider> _pumpFromLauncher(
   WidgetTester tester,
-  InMemoryTripRepository repository, {
-  void Function(Object? result)? onResult,
-}) async {
+  InMemoryTripRepository repository,
+) async {
   await tester.binding.setSurfaceSize(_phoneSize);
   addTearDown(() => tester.binding.setSurfaceSize(null));
   final provider = TripProvider(repository: repository);
   await tester.pumpWidget(
-    ChangeNotifierProvider.value(
-      value: provider,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: provider),
+        ChangeNotifierProvider(create: (_) => ChecklistProvider()),
+      ],
       child: MaterialApp(
+        onGenerateRoute: AppRoutes.generateRoute,
         home: Builder(
           builder: (context) => Scaffold(
             body: TextButton(
-              onPressed: () async {
-                final result = await Navigator.of(context).push<Object?>(
-                  MaterialPageRoute(builder: (_) => const CreateTripScreen()),
-                );
-                onResult?.call(result);
-              },
+              onPressed: () => Navigator.of(context).push<void>(
+                MaterialPageRoute(builder: (_) => const CreateTripScreen()),
+              ),
               child: const Text('Open'),
             ),
           ),
@@ -252,12 +255,7 @@ void main() {
 
   testWidgets('a valid trip is saved with the entered details', (tester) async {
     final repository = InMemoryTripRepository();
-    Object? result;
-    final provider = await _pumpFromLauncher(
-      tester,
-      repository,
-      onResult: (value) => result = value,
-    );
+    final provider = await _pumpFromLauncher(tester, repository);
 
     await _fillValidTrip(tester);
     await tester.tap(find.text('Generate Packing List'));
@@ -273,8 +271,38 @@ void main() {
     expect(saved.departureDate, DateTime(now.year, now.month, now.day));
 
     expect(find.text('Where are you headed?'), findsNothing);
-    expect(result, isA<Trip>());
     expect(find.text('"Summer in Santorini" was saved.'), findsOneWidget);
+  });
+
+  testWidgets('Generate Packing List opens the checklist for the new trip', (
+    tester,
+  ) async {
+    final repository = InMemoryTripRepository();
+    final provider = await _pumpFromLauncher(tester, repository);
+
+    await _fillValidTrip(tester);
+    await tester.tap(find.text('Generate Packing List'));
+    await tester.pumpAndSettle();
+
+    final checklist = tester.widget<ChecklistScreen>(
+      find.byType(ChecklistScreen),
+    );
+    expect(checklist.trip!.id, provider.trips.single.id);
+    expect(find.text('Summer in Santorini'), findsOneWidget);
+
+    final element = tester.element(find.byType(ChecklistScreen));
+    final checklistProvider = Provider.of<ChecklistProvider>(
+      element,
+      listen: false,
+    );
+    expect(checklistProvider.selectedTripId, provider.trips.single.id);
+    expect(checklistProvider.items, isNotEmpty);
+
+    // The form was replaced, so going back returns to the launching screen.
+    Navigator.of(element).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('Open'), findsOneWidget);
+    expect(find.text('Where are you headed?'), findsNothing);
   });
 
   testWidgets('invalid input never reaches the database', (tester) async {

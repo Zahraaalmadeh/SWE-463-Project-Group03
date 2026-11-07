@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../app_routes.dart';
 import '../models/trip.dart';
 import '../providers/trip_provider.dart';
 
@@ -249,7 +250,12 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       messenger.showSnackBar(
         SnackBar(content: Text('"${trip.name}" was saved.')),
       );
-      navigator.pop(trip);
+      // Hand the saved trip to the packing checklist feature. Replacing this
+      // route means Back from the checklist returns to Home, not the form.
+      await navigator.pushReplacementNamed(
+        AppRoutes.checklist,
+        arguments: trip,
+      );
     } catch (error) {
       debugPrint('Failed to create trip: $error');
       if (!mounted) return;
