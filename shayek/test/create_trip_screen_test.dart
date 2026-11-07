@@ -103,4 +103,41 @@ void main() {
     expect(find.text('${CreateTripScreen.maxTravelers}'), findsOneWidget);
     expect(find.text('${CreateTripScreen.maxTravelers + 1}'), findsNothing);
   });
+
+  testWidgets('departure date can be picked', (tester) async {
+    await _pumpScreen(tester);
+    expect(find.text('mm/dd/yyyy'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('mm/dd/yyyy'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('mm/dd/yyyy'));
+    await tester.pumpAndSettle();
+    expect(find.text('Select departure date'), findsOneWidget);
+
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final now = DateTime.now();
+    String two(int v) => v.toString().padLeft(2, '0');
+    expect(find.text('mm/dd/yyyy'), findsNothing);
+    expect(
+      find.text('${two(now.month)}/${two(now.day)}/${now.year}'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('cancelling the date picker keeps the field empty', (
+    tester,
+  ) async {
+    await _pumpScreen(tester);
+
+    await tester.ensureVisible(find.text('mm/dd/yyyy'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('mm/dd/yyyy'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('mm/dd/yyyy'), findsOneWidget);
+  });
 }

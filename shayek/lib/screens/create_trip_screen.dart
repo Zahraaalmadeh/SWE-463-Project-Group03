@@ -20,7 +20,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   TripType _selectedType = TripType.beach;
   int _durationDays = 5;
   int _travelerCount = 2;
-  final DateTime? _departureDate = null;
+  DateTime? _departureDate;
 
   @override
   void dispose() {
@@ -104,7 +104,10 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                       ),
                       const SizedBox(height: 28),
                       const _FieldLabel('Departure date'),
-                      _DateField(date: _departureDate),
+                      _DateField(
+                        date: _departureDate,
+                        onTap: _pickDepartureDate,
+                      ),
                     ],
                   ),
                 ),
@@ -118,6 +121,28 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickDepartureDate() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final current = _departureDate;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current == null || current.isBefore(today) ? today : current,
+      firstDate: today,
+      lastDate: DateTime(today.year + 5, today.month, today.day),
+      helpText: 'Select departure date',
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: Theme.of(context).colorScheme
+              .copyWith(primary: _Palette.primary, onPrimary: Colors.white),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _departureDate = picked);
   }
 
   InputDecoration _inputDecoration({String? errorText}) {
@@ -542,9 +567,10 @@ class _CounterButton extends StatelessWidget {
 }
 
 class _DateField extends StatelessWidget {
-  const _DateField({required this.date});
+  const _DateField({required this.date, required this.onTap});
 
   final DateTime? date;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -561,7 +587,7 @@ class _DateField extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: null,
+        onTap: onTap,
         child: SizedBox(
           height: 56,
           child: Padding(
