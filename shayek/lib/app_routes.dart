@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'models/trip.dart';
 import 'screens/checklist_screen.dart';
 import 'screens/create_trip_screen.dart';
 import 'screens/family_members_screen.dart';
@@ -21,7 +22,8 @@ class AppRoutes {
       case createTrip:
         return _page(settings, const CreateTripScreen());
       case checklist:
-        return _page(settings, const ChecklistScreen());
+        final trip = settings.arguments is Trip ? settings.arguments! as Trip : null;
+        return _page(settings, ChecklistScreen(trip: trip));
       case templates:
         return _page(settings, const NavigationShell(initialTabIndex: 1));
       case family:
