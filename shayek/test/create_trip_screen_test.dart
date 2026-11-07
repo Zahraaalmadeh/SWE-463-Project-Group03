@@ -41,11 +41,11 @@ void main() {
 
     expect(
       tester.getSemantics(find.text('Beach')),
-      containsSemantics(isSelected: true),
+      isSemantics(isSelected: true),
     );
     expect(
       tester.getSemantics(find.text('Camping')),
-      containsSemantics(isSelected: false),
+      isSemantics(isSelected: false),
     );
 
     await tester.tap(find.text('Camping'));
@@ -53,12 +53,54 @@ void main() {
 
     expect(
       tester.getSemantics(find.text('Camping')),
-      containsSemantics(isSelected: true),
+      isSemantics(isSelected: true),
     );
     expect(
       tester.getSemantics(find.text('Beach')),
-      containsSemantics(isSelected: false),
+      isSemantics(isSelected: false),
     );
     semantics.dispose();
+  });
+
+  testWidgets('duration and travelers counters stay within limits', (
+    tester,
+  ) async {
+    await _pumpScreen(tester);
+    final increaseDays = find.byTooltip('Increase Duration (days)');
+    final decreaseDays = find.byTooltip('Decrease Duration (days)');
+    final increaseTravelers = find.byTooltip('Increase Travelers');
+    final decreaseTravelers = find.byTooltip('Decrease Travelers');
+
+    expect(find.text('5'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+
+    await tester.tap(increaseDays);
+    await tester.pump();
+    expect(find.text('6'), findsOneWidget);
+
+    for (var i = 0; i < 10; i++) {
+      await tester.tap(decreaseDays);
+      await tester.pump();
+    }
+    expect(find.text('${CreateTripScreen.minDurationDays}'), findsOneWidget);
+
+    await tester.tap(increaseTravelers);
+    await tester.pump();
+    expect(find.text('3'), findsOneWidget);
+
+    for (var i = 0; i < 10; i++) {
+      await tester.tap(decreaseTravelers);
+      await tester.pump();
+    }
+    // Both counters are now at their minimum of 1 and cannot go lower.
+    expect(find.text('1'), findsNWidgets(2));
+    expect(find.text('0'), findsNothing);
+
+    for (var i = 0; i < CreateTripScreen.maxTravelers + 5; i++) {
+      await tester.tap(increaseTravelers);
+      await tester.pump();
+    }
+    expect(find.text('${CreateTripScreen.maxTravelers}'), findsOneWidget);
+    expect(find.text('${CreateTripScreen.maxTravelers + 1}'), findsNothing);
   });
 }

@@ -6,6 +6,11 @@ import '../models/trip.dart';
 class CreateTripScreen extends StatefulWidget {
   const CreateTripScreen({super.key});
 
+  static const minDurationDays = 1;
+  static const maxDurationDays = 90;
+  static const minTravelers = 1;
+  static const maxTravelers = 20;
+
   @override
   State<CreateTripScreen> createState() => _CreateTripScreenState();
 }
@@ -13,8 +18,8 @@ class CreateTripScreen extends StatefulWidget {
 class _CreateTripScreenState extends State<CreateTripScreen> {
   final _nameController = TextEditingController();
   TripType _selectedType = TripType.beach;
-  final int _durationDays = 5;
-  final int _travelerCount = 2;
+  int _durationDays = 5;
+  int _travelerCount = 2;
   final DateTime? _departureDate = null;
 
   @override
@@ -66,10 +71,16 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                             child: _Counter(
                               label: 'Duration (days)',
                               value: _durationDays,
-                              onDecrement: null,
-                              onIncrement: null,
-                              canDecrement: true,
-                              canIncrement: true,
+                              onDecrement: () =>
+                                  setState(() => _durationDays--),
+                              onIncrement: () =>
+                                  setState(() => _durationDays++),
+                              canDecrement:
+                                  _durationDays >
+                                  CreateTripScreen.minDurationDays,
+                              canIncrement:
+                                  _durationDays <
+                                  CreateTripScreen.maxDurationDays,
                             ),
                           ),
                           const SizedBox(width: 14),
@@ -77,10 +88,16 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                             child: _Counter(
                               label: 'Travelers',
                               value: _travelerCount,
-                              onDecrement: null,
-                              onIncrement: null,
-                              canDecrement: true,
-                              canIncrement: true,
+                              onDecrement: () =>
+                                  setState(() => _travelerCount--),
+                              onIncrement: () =>
+                                  setState(() => _travelerCount++),
+                              canDecrement:
+                                  _travelerCount >
+                                  CreateTripScreen.minTravelers,
+                              canIncrement:
+                                  _travelerCount <
+                                  CreateTripScreen.maxTravelers,
                             ),
                           ),
                         ],
@@ -431,8 +448,8 @@ class _Counter extends StatelessWidget {
 
   final String label;
   final int value;
-  final VoidCallback? onDecrement;
-  final VoidCallback? onIncrement;
+  final VoidCallback onDecrement;
+  final VoidCallback onIncrement;
   final bool canDecrement;
   final bool canIncrement;
 
@@ -491,14 +508,14 @@ class _CounterButton extends StatelessWidget {
     required this.tooltip,
     required this.fill,
     required this.enabled,
-    this.onPressed,
+    required this.onPressed,
   });
 
   final IconData icon;
   final String tooltip;
   final Color fill;
   final bool enabled;
-  final VoidCallback? onPressed;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
