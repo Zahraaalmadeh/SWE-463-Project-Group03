@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/trip.dart';
 
@@ -10,6 +11,7 @@ class CreateTripScreen extends StatefulWidget {
   static const maxDurationDays = 90;
   static const minTravelers = 1;
   static const maxTravelers = 20;
+  static const maxNameLength = 60;
 
   @override
   State<CreateTripScreen> createState() => _CreateTripScreenState();
@@ -17,10 +19,14 @@ class CreateTripScreen extends StatefulWidget {
 
 class _CreateTripScreenState extends State<CreateTripScreen> {
   final _nameController = TextEditingController();
+  final _nameFieldKey = GlobalKey();
+  final _dateFieldKey = GlobalKey();
   TripType _selectedType = TripType.beach;
   int _durationDays = 5;
   int _travelerCount = 2;
   DateTime? _departureDate;
+  String? _nameError;
+  String? _dateError;
 
   @override
   void dispose() {
@@ -50,11 +56,22 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                       const SizedBox(height: 28),
                       const _FieldLabel('Trip name'),
                       TextField(
+                        key: _nameFieldKey,
                         controller: _nameController,
                         textCapitalization: TextCapitalization.words,
                         textInputAction: TextInputAction.done,
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(
+                            CreateTripScreen.maxNameLength,
+                          ),
+                        ],
                         style: _Text.input,
-                        decoration: _inputDecoration(),
+                        decoration: _inputDecoration(errorText: _nameError),
+                        onChanged: (_) {
+                          if (_nameError != null) {
+                            setState(() => _nameError = _validateName());
+                          }
+                        },
                       ),
                       const SizedBox(height: 28),
                       const _FieldLabel('Trip type'),
@@ -105,7 +122,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                       const SizedBox(height: 28),
                       const _FieldLabel('Departure date'),
                       _DateField(
+                        key: _dateFieldKey,
                         date: _departureDate,
+                        errorText: _dateError,
                         onTap: _pickDepartureDate,
                       ),
                     ],
@@ -113,7 +132,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                  child: _GenerateButton(onPressed: null),
+                  child: _GenerateButton(onPressed: _submit),
                 ),
               ],
             ),
@@ -142,7 +161,71 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       ),
     );
     if (picked == null || !mounted) return;
-    setState(() => _departureDate = picked);
+    setState(() {
+      _departureDate = picked;
+      _dateError = null;
+    });
+  }
+
+  String? _validateName() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return 'Please enter a trip name.';
+    return null;
+  }
+
+  String? _validateDate() {
+    final date = _departureDate;
+    if (date == null) return 'Please choose a departure date.';
+    final now = DateTime.now();
+    if (date.isBefore(DateTime(now.year, now.month, now.day))) {
+      return 'Departure date cannot be in the past.';
+    }
+    return null;
+  }
+
+  /// Scrolls the first invalid field into view so its message is visible on
+  /// short screens.
+  void _revealFirstError() {
+    final key = _nameError != null ? _nameFieldKey : _dateFieldKey;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final fieldContext = key.currentContext;
+      if (fieldContext == null || !fieldContext.mounted) return;
+      Scrollable.ensureVisible(
+        fieldContext,
+        alignment: 0.5,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  /// Validates every required input and shows inline errors for any that fail.
+  bool _validate() {
+    final nameError = _validateName();
+    final dateError = _validateDate();
+    final durationValid =
+        _durationDays >= CreateTripScreen.minDurationDays &&
+        _durationDays <= CreateTripScreen.maxDurationDays;
+    final travelersValid =
+        _travelerCount >= CreateTripScreen.minTravelers &&
+        _travelerCount <= CreateTripScreen.maxTravelers;
+    setState(() {
+      _nameError = nameError;
+      _dateError = dateError;
+    });
+    return nameError == null &&
+        dateError == null &&
+        durationValid &&
+        travelersValid;
+  }
+
+  void _submit() {
+    FocusScope.of(context).unfocus();
+    if (!_validate()) {
+      _revealFirstError();
+      return;
+    }
+    // Saving the validated trip is added with trip persistence.
   }
 
   InputDecoration _inputDecoration({String? errorText}) {
@@ -203,6 +286,7 @@ abstract final class _Text {
   );
   static const input = TextStyle(color: _Palette.ink, fontSize: 16);
   static const hint = TextStyle(color: _Palette.muted, fontSize: 16);
+  static const error = TextStyle(color: _Palette.error, fontSize: 12);
 }
 
 class _Header extends StatelessWidget {
@@ -567,9 +651,15 @@ class _CounterButton extends StatelessWidget {
 }
 
 class _DateField extends StatelessWidget {
-  const _DateField({required this.date, required this.onTap});
+  const _DateField({
+    super.key,
+    required this.date,
+    required this.errorText,
+    required this.onTap,
+  });
 
   final DateTime? date;
+  final String? errorText;
   final VoidCallback onTap;
 
   @override
@@ -579,11 +669,14 @@ class _DateField extends StatelessWidget {
         ? 'mm/dd/yyyy'
         : '${_twoDigits(date.month)}/${_twoDigits(date.day)}/${date.year}';
 
-    return Material(
+    final errorText = this.errorText;
+    final field = Material(
       color: _Palette.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(_radius),
-        side: const BorderSide(color: _Palette.border),
+        side: BorderSide(
+          color: errorText == null ? _Palette.border : _Palette.error,
+        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -614,6 +707,18 @@ class _DateField extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    if (errorText == null) return field;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        field,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+          child: Text(errorText, style: _Text.error),
+        ),
+      ],
     );
   }
 

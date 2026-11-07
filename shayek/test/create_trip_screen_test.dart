@@ -140,4 +140,60 @@ void main() {
 
     expect(find.text('mm/dd/yyyy'), findsOneWidget);
   });
+
+  testWidgets('submitting empty form shows required-field errors', (
+    tester,
+  ) async {
+    await _pumpScreen(tester);
+
+    await tester.tap(find.text('Generate Packing List'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Please enter a trip name.'), findsOneWidget);
+
+    // Once the name is valid, the date error is scrolled into view.
+    await tester.enterText(find.byType(TextField), 'Weekend away');
+    await tester.tap(find.text('Generate Packing List'));
+    await tester.pumpAndSettle();
+    expect(find.text('Please choose a departure date.'), findsOneWidget);
+  });
+
+  testWidgets('whitespace-only names are rejected', (tester) async {
+    await _pumpScreen(tester);
+
+    await tester.enterText(find.byType(TextField), '   ');
+    await tester.tap(find.text('Generate Packing List'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Please enter a trip name.'), findsOneWidget);
+  });
+
+  testWidgets('errors clear once the fields are fixed', (tester) async {
+    await _pumpScreen(tester);
+
+    await tester.tap(find.text('Generate Packing List'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Summer in Santorini');
+    await tester.pump();
+    expect(find.text('Please enter a trip name.'), findsNothing);
+
+    await tester.ensureVisible(find.text('mm/dd/yyyy'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('mm/dd/yyyy'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.text('Please choose a departure date.'), findsNothing);
+  });
+
+  testWidgets('trip name is capped at the maximum length', (tester) async {
+    await _pumpScreen(tester);
+
+    await tester.enterText(find.byType(TextField), 'a' * 80);
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller!.text.length, CreateTripScreen.maxNameLength);
+  });
 }
