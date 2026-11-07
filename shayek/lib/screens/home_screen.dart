@@ -132,6 +132,8 @@ class _TripList extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             const spacing = 24.0;
+            // 640 is roughly two card-widths' worth of room; below it a
+            // single column reads better than two cramped columns.
             final isWide = constraints.maxWidth >= 640;
             final cardWidth = isWide
                 ? (constraints.maxWidth - spacing) / 2
@@ -323,6 +325,8 @@ class _HomeHeaderRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
+        // "Sara" is a placeholder: there's no auth/user profile yet, so this
+        // isn't reading a real signed-in name.
         const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

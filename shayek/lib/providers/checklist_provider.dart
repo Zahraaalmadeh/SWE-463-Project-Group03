@@ -5,6 +5,9 @@ import '../models/trip.dart';
 
 /// Owns the selected trip's packing items and future checklist CRUD actions.
 class ChecklistProvider extends ChangeNotifier {
+  // items/isLoading/errorMessage are placeholders for the Checklist team:
+  // nothing populates them yet, since generating/loading packing items is
+  // out of scope for Home. Only selectedTrip is wired up so far.
   final List<PackingItem> _items = [];
   Trip? _selectedTrip;
   final bool _isLoading = false;

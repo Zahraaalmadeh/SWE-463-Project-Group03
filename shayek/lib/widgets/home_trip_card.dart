@@ -25,6 +25,9 @@ class HomeTripCard extends StatelessWidget {
   const HomeTripCard({super.key, required this.trip, this.onTap});
 
   final HomeTrip trip;
+
+  /// Null disables the tap (InkWell just shows no ripple); Home always
+  /// passes a callback that opens that trip's Checklist.
   final VoidCallback? onTap;
 
   @override
