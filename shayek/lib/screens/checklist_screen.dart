@@ -469,7 +469,11 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       ),
     );
 
-    if (!mounted) return;
+    if (!mounted) {
+      nameController.dispose();
+      quantityController.dispose();
+      return;
+    }
     if (saved == true) {
       final checklist = context.read<ChecklistProvider>();
       final name = nameController.text.trim();
@@ -497,7 +501,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   Future<void> _showGenerateDialog() async {
     var type = _trip.type;
     final daysController = TextEditingController(text: '${_trip.durationDays}');
-    final result = await showDialog<TripType>(
+    final result = await showDialog<(TripType, int)?>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -516,10 +520,16 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                 onChanged: (value) => setDialogState(() => type = value ?? TripType.other),
               ),
               const SizedBox(height: 12),
-              TextField(
+              TextFormField(
                 controller: daysController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Trip duration (days)'),
+                validator: (value) {
+                  final days = int.tryParse(value ?? '');
+                  return days == null || days < 1 || days > 60
+                      ? 'Enter a duration between 1 and 60 days'
+                      : null;
+                },
               ),
             ],
           ),
@@ -529,7 +539,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               onPressed: () {
                 final days = int.tryParse(daysController.text);
                 if (days == null || days < 1 || days > 60) return;
-                Navigator.pop(dialogContext, type);
+                Navigator.pop(dialogContext, (type, days));
               },
               child: const Text('Generate'),
             ),
@@ -540,13 +550,12 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     daysController.dispose();
     if (!mounted || result == null) return;
 
-    final days = int.tryParse(daysController.text) ?? _trip.durationDays;
     setState(() {
       _trip = Trip(
         id: _trip.id,
         name: _trip.name,
-        type: result,
-        durationDays: days.clamp(1, 60),
+        type: result.$1,
+        durationDays: result.$2,
         departureDate: _trip.departureDate,
         travelerCount: _trip.travelerCount,
         reminderEnabled: _trip.reminderEnabled,

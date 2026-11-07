@@ -73,10 +73,14 @@ class ChecklistProvider extends ChangeNotifier {
     if (tripId == null) {
       throw StateError('Select a trip before adding packing items.');
     }
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      throw ArgumentError.value(name, 'name', 'Item name cannot be empty.');
+    }
     final item = PackingItem(
       id: _newId(),
       tripId: tripId,
-      name: name.trim(),
+      name: trimmedName,
       category: _validCategory(category),
       quantity: quantity < 1 ? 1 : quantity,
       isShared: isShared,
@@ -91,11 +95,15 @@ class ChecklistProvider extends ChangeNotifier {
       (item) => item.id == updatedItem.id && item.tripId == updatedItem.tripId,
     );
     if (index < 0) return;
+    final name = updatedItem.name.trim();
+    if (name.isEmpty) {
+      throw ArgumentError.value(updatedItem.name, 'name', 'Item name cannot be empty.');
+    }
     _allItems[index] = PackingItem(
       id: updatedItem.id,
       tripId: updatedItem.tripId,
       travelerId: updatedItem.travelerId,
-      name: updatedItem.name.trim(),
+      name: name,
       category: _validCategory(updatedItem.category),
       quantity: updatedItem.quantity < 1 ? 1 : updatedItem.quantity,
       isPacked: updatedItem.isPacked,
@@ -116,17 +124,19 @@ class ChecklistProvider extends ChangeNotifier {
   }
 
   void removeItem(String itemId) {
-    final removed = _allItems.removeWhere(
+    final originalLength = _allItems.length;
+    _allItems.removeWhere(
       (item) => item.id == itemId && item.tripId == _selectedTripId,
     );
-    if (removed > 0) notifyListeners();
+    if (_allItems.length != originalLength) notifyListeners();
   }
 
   void removePackedItems() {
-    final removed = _allItems.removeWhere(
+    final originalLength = _allItems.length;
+    _allItems.removeWhere(
       (item) => item.tripId == _selectedTripId && item.isPacked,
     );
-    if (removed > 0) notifyListeners();
+    if (_allItems.length != originalLength) notifyListeners();
   }
 
   String _newId() => '${DateTime.now().microsecondsSinceEpoch}-${_idCounter++}';
@@ -147,15 +157,14 @@ class ChecklistProvider extends ChangeNotifier {
       );
 
   List<_Suggestion> _suggestionsFor(Trip trip) {
-    final days = trip.durationDays.clamp(1, 60);
-    final travelers = trip.travelerCount.clamp(1, 12);
-    final clothingMultiplier = travelers;
+    final days = trip.durationDays.clamp(1, 60).toInt();
+    final travelers = trip.travelerCount.clamp(1, 12).toInt();
     final suggestions = <_Suggestion>[
-      _Suggestion('Tops', 'Clothing', days * clothingMultiplier),
-      _Suggestion('Bottoms', 'Clothing', ((days + 1) ~/ 2) * clothingMultiplier),
-      _Suggestion('Underwear', 'Clothing', days * clothingMultiplier),
-      _Suggestion('Socks', 'Clothing', days * clothingMultiplier),
-      _Suggestion('Sleepwear', 'Clothing', clothingMultiplier),
+      _Suggestion('Tops', 'Clothing', days * travelers),
+      _Suggestion('Bottoms', 'Clothing', ((days + 1) ~/ 2) * travelers),
+      _Suggestion('Underwear', 'Clothing', days * travelers),
+      _Suggestion('Socks', 'Clothing', days * travelers),
+      _Suggestion('Sleepwear', 'Clothing', travelers),
       _Suggestion('Comfortable shoes', 'Clothing', 1),
       _Suggestion('Toothbrushes', 'Toiletries', travelers),
       _Suggestion('Toothpaste', 'Toiletries', 1),
