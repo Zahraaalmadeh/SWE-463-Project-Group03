@@ -30,15 +30,15 @@ class HomeTripCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: EdgeInsets.zero,
-      elevation: 3,
+      elevation: 2,
       shadowColor: const Color(0xFF436C5B).withValues(alpha: 0.18),
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Column(
         children: [
           _TripImagePlaceholder(trip: trip),
           Padding(
-            padding: const EdgeInsets.fromLTRB(32, 26, 32, 32),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             child: Column(
               children: [
                 Row(
@@ -47,38 +47,38 @@ class HomeTripCard extends StatelessWidget {
                       icon: Icons.calendar_today_outlined,
                       text: trip.date,
                     ),
-                    const SizedBox(width: 28),
+                    const SizedBox(width: 16),
                     _TripDetail(
                       icon: Icons.access_time_outlined,
                       text: trip.duration,
                     ),
-                    const SizedBox(width: 28),
+                    const SizedBox(width: 16),
                     _TripDetail(
                       icon: Icons.people_outline,
                       text: trip.travelers,
                     ),
                   ],
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(12),
                         child: LinearProgressIndicator(
                           value: trip.progress,
-                          minHeight: 16,
+                          minHeight: 8,
                           backgroundColor: const Color(0xFFDCE9E1),
                           color: const Color(0xFF436C5B),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 22),
+                    const SizedBox(width: 12),
                     Text(
                       '${(trip.progress * 100).round()}%',
                       style: const TextStyle(
                         color: Color(0xFF436C5B),
-                        fontSize: 25,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -101,7 +101,7 @@ class _TripImagePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 320,
+      height: 180,
       child: DecoratedBox(
         // Temporary local scenery until the team adds approved trip photos.
         decoration: BoxDecoration(
@@ -112,24 +112,24 @@ class _TripImagePlaceholder extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 10,
+                  horizontal: 14,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   trip.type,
                   style: const TextStyle(
                     color: Color(0xFF436C5B),
-                    fontSize: 24,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -140,7 +140,7 @@ class _TripImagePlaceholder extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.white,
                   fontFamily: 'Georgia',
-                  fontSize: 46,
+                  fontSize: 24,
                 ),
               ),
             ],
@@ -162,11 +162,11 @@ class _TripDetail extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: const Color(0xFF607168), size: 26),
-        const SizedBox(width: 10),
+        Icon(icon, color: const Color(0xFF607168), size: 15),
+        const SizedBox(width: 6),
         Text(
           text,
-          style: const TextStyle(color: Color(0xFF607168), fontSize: 24),
+          style: const TextStyle(color: Color(0xFF607168), fontSize: 13),
         ),
       ],
     );

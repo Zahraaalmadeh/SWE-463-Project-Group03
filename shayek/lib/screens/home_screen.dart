@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_routes.dart';
 import '../widgets/home_trip_card.dart';
 
-/// Home UI for the Phase 3 design. The trip data is temporary display data.
+/// Desktop-sized Home UI for the Phase 3 design. The trip data is temporary display data.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -33,74 +33,118 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAF6),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(42, 44, 42, 40),
-          children: [
-            const _BrandHeader(),
-            const SizedBox(height: 66),
-            const Text(
-              'Good afternoon, Sara',
-              style: TextStyle(fontSize: 28, color: Color(0xFF607168)),
-            ),
-            const SizedBox(height: 14),
-            const Text(
-              'Ready for your next\nadventure?',
-              style: TextStyle(
-                color: Color(0xFF1A2925),
-                fontFamily: 'Georgia',
-                fontSize: 62,
-                height: 1.05,
-              ),
-            ),
-            const SizedBox(height: 54),
-            SizedBox(
-              height: 112,
-              child: FilledButton.icon(
-                onPressed: () =>
-                    Navigator.of(context).pushNamed(AppRoutes.createTrip),
-                icon: const Icon(Icons.add, size: 40),
-                label: const Text('New Trip'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF436C5B),
-                  foregroundColor: Colors.white,
-                  textStyle: const TextStyle(fontSize: 34),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(32),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 78),
-            const Row(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1080),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(40, 32, 40, 40),
               children: [
-                Expanded(
-                  child: FittedBox(
-                    alignment: Alignment.centerLeft,
-                    fit: BoxFit.scaleDown,
-                    child: Text(
+                const _BrandHeader(),
+                const SizedBox(height: 40),
+                const _HomeHeaderRow(),
+                const SizedBox(height: 48),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
                       'Upcoming Trips',
                       style: TextStyle(
                         color: Color(0xFF1A2925),
                         fontFamily: 'Georgia',
-                        fontSize: 48,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ),
+                    Text(
+                      '${_trips.length} trips',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF607168),
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 16),
-                Text(
-                  '2 trips',
-                  style: TextStyle(fontSize: 28, color: Color(0xFF607168)),
+                const SizedBox(height: 20),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    const spacing = 24.0;
+                    final isWide = constraints.maxWidth >= 640;
+                    final cardWidth = isWide
+                        ? (constraints.maxWidth - spacing) / 2
+                        : constraints.maxWidth;
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: [
+                        for (final trip in _trips)
+                          SizedBox(
+                            width: cardWidth,
+                            child: HomeTripCard(trip: trip),
+                          ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
-            const SizedBox(height: 34),
-            for (final trip in _trips) ...[
-              HomeTripCard(trip: trip),
-              const SizedBox(height: 40),
-            ],
-          ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _HomeHeaderRow extends StatelessWidget {
+  const _HomeHeaderRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Good afternoon, Sara',
+                style: TextStyle(fontSize: 16, color: Color(0xFF607168)),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Ready for your next adventure?',
+                style: TextStyle(
+                  color: Color(0xFF1A2925),
+                  fontFamily: 'Georgia',
+                  fontSize: 34,
+                  height: 1.15,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 24),
+        const _NewTripButton(),
+      ],
+    );
+  }
+}
+
+class _NewTripButton extends StatelessWidget {
+  const _NewTripButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: () => Navigator.of(context).pushNamed(AppRoutes.createTrip),
+      icon: const Icon(Icons.add, size: 20),
+      label: const Text('New Trip'),
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFF436C5B),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }
@@ -114,13 +158,13 @@ class _BrandHeader extends StatelessWidget {
     return const Row(
       children: [
         _BrandIcon(),
-        SizedBox(width: 18),
+        SizedBox(width: 12),
         Text(
           'Shayek',
           style: TextStyle(
             color: Color(0xFF1A2925),
             fontFamily: 'Georgia',
-            fontSize: 42,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -135,13 +179,13 @@ class _BrandIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 72,
-      height: 72,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         color: const Color(0xFF436C5B),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: const Icon(Icons.luggage_outlined, color: Colors.white, size: 42),
+      child: const Icon(Icons.luggage_outlined, color: Colors.white, size: 22),
     );
   }
 }
