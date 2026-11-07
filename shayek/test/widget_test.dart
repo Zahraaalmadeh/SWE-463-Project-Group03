@@ -35,6 +35,6 @@ void main() {
 
     await tester.tap(find.text('New Trip'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Create Trip'), findsOneWidget);
+    expect(find.text('Where are you headed?'), findsOneWidget);
   });
 }
