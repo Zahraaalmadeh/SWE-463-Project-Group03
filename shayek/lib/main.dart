@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 import 'app_routes.dart';
 import 'providers/checklist_provider.dart';
@@ -7,6 +10,9 @@ import 'providers/template_provider.dart';
 import 'providers/trip_provider.dart';
 
 void main() {
+  if (kIsWeb) {
+    databaseFactory = databaseFactoryFfiWeb;
+  }
   runApp(const ShayekApp());
 }
 

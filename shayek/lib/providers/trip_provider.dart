@@ -108,7 +108,10 @@ class TripProvider extends ChangeNotifier {
   }
 
   String _newId() {
-    final suffix = _random.nextInt(1 << 32).toRadixString(16).padLeft(8, '0');
+    final suffix = _random
+        .nextInt(0x7fffffff)
+        .toRadixString(16)
+        .padLeft(8, '0');
     return 'trip-${DateTime.now().microsecondsSinceEpoch}-$suffix';
   }
 }

@@ -55,8 +55,12 @@ The priority features are Trip Creation, Generated Packing Checklist, Checklist 
 - Material 3
 - `provider` with `ChangeNotifier` for shared state
 - `sqflite` for local SQLite storage
+- `sqflite_common_ffi_web` for SQLite-backed trip storage in browser IndexedDB
 - `path` for portable database paths
 - No authentication, backend, API, Firebase, or cloud storage
+
+The web SQLite worker and WebAssembly runtime are included in `web/`. Browser
+data is scoped to the app's origin and port.
 
 ## Folder structure
 
@@ -111,7 +115,7 @@ flutter analyze
 
 ## Current limitations
 
-This is a runnable skeleton, not a completed packing assistant. Data is not yet connected to the user interface, so closing the app does not demonstrate saved trips or templates. The current checklist and template pages show placeholders rather than completed feature interfaces. The Family Members and Return Checklist features remain planned for Phase 4.
+The web database is stored in browser IndexedDB, so data is scoped to the app's origin and port. The Family Members and Return Checklist features remain planned for Phase 4.
 
 ## AI-use disclosure
 
