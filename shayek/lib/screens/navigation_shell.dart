@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../app_routes.dart';
 import 'home_screen.dart';
 import 'templates_screen.dart';
-import '../widgets/shared_bottom_navigation_bar.dart';
 
 /// Hosts the two main tabs so they remain consistent across the app.
 class NavigationShell extends StatefulWidget {
@@ -16,6 +15,8 @@ class NavigationShell extends StatefulWidget {
 }
 
 class _NavigationShellState extends State<NavigationShell> {
+  static const _navigationColor = Color(0xFF607168);
+
   late int _selectedIndex;
 
   @override

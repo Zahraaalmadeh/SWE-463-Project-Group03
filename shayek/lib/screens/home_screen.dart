@@ -158,12 +158,11 @@ class _TripList extends StatelessWidget {
     );
   }
 
-  /// Stores the tapped trip on ChecklistProvider, then navigates. Checklist
-  /// reads the selection from the provider instead of a route argument, so
-  /// every screen that needs "the selected trip" shares the same source.
+  /// Stores the selected trip ID for checklist actions and passes the trip to
+  /// the checklist screen so it can generate the correct suggestions.
   void _openChecklist(BuildContext context, Trip trip) {
-    context.read<ChecklistProvider>().selectTrip(trip);
-    Navigator.of(context).pushNamed(AppRoutes.checklist);
+    context.read<ChecklistProvider>().selectTrip(trip.id);
+    Navigator.of(context).pushNamed(AppRoutes.checklist, arguments: trip);
   }
 
   /// Adapts the persisted [Trip] into the card's display model. Packing

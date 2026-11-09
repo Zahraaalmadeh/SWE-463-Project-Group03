@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../app_routes.dart';
-
 /// Bottom navigation shared by the Home and Templates tabs throughout Shayek.
 class SharedBottomNavigationBar extends StatelessWidget {
   const SharedBottomNavigationBar({

@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 
 import '../models/packing_item.dart';
 import '../models/trip.dart';
-import '../models/trip.dart';
 
 /// Owns packing items and checklist actions for the selected trip.
 ///
@@ -13,7 +12,7 @@ class ChecklistProvider extends ChangeNotifier {
   final List<PackingItem> _allItems = [];
   String? _selectedTripId;
   String? _errorMessage;
-  bool _isLoading = false;
+  final bool _isLoading = false;
   int _idCounter = 0;
 
   static const categories = <String>[

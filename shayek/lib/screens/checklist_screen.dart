@@ -56,7 +56,6 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final trip = context.watch<ChecklistProvider>().selectedTrip;
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F5),
       appBar: AppBar(
@@ -505,7 +504,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: category,
+                    initialValue: category,
                     decoration: const InputDecoration(labelText: 'Category'),
                     items: ChecklistProvider.categories
                         .map(
@@ -548,8 +547,9 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
             ),
             FilledButton(
               onPressed: () {
-                if (formKey.currentState?.validate() ?? false)
+                if (formKey.currentState?.validate() ?? false) {
                   Navigator.pop(dialogContext, true);
+                }
               },
               child: const Text('Save'),
             ),
@@ -611,7 +611,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<TripType>(
-                value: type,
+                initialValue: type,
                 decoration: const InputDecoration(labelText: 'Trip type'),
                 items: TripType.values
                     .map(
