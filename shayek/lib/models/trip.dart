@@ -20,4 +20,20 @@ class Trip {
   final int travelerCount;
   final bool reminderEnabled;
   final DateTime? reminderTime;
+
+  /// Builds a [Trip] from a raw `trips` table row (see DatabaseService.getTrips).
+  factory Trip.fromMap(Map<String, Object?> map) {
+    final reminderTime = map['reminder_time'] as String?;
+    return Trip(
+      id: map['id'] as String,
+      name: map['name'] as String,
+      type: TripType.values.byName(map['type'] as String),
+      durationDays: map['duration_days'] as int,
+      departureDate: DateTime.parse(map['departure_date'] as String),
+      travelerCount: map['traveler_count'] as int,
+      // SQLite has no boolean type; the column stores 0/1.
+      reminderEnabled: (map['reminder_enabled'] as int) != 0,
+      reminderTime: reminderTime == null ? null : DateTime.parse(reminderTime),
+    );
+  }
 }

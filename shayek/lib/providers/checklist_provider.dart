@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/packing_item.dart';
 import '../models/trip.dart';
+import '../models/trip.dart';
 
 /// Owns packing items and checklist actions for the selected trip.
 ///
@@ -26,8 +27,8 @@ class ChecklistProvider extends ChangeNotifier {
   ];
 
   List<PackingItem> get items => List.unmodifiable(
-        _allItems.where((item) => item.tripId == _selectedTripId),
-      );
+    _allItems.where((item) => item.tripId == _selectedTripId),
+  );
   String? get selectedTripId => _selectedTripId;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -97,7 +98,11 @@ class ChecklistProvider extends ChangeNotifier {
     if (index < 0) return;
     final name = updatedItem.name.trim();
     if (name.isEmpty) {
-      throw ArgumentError.value(updatedItem.name, 'name', 'Item name cannot be empty.');
+      throw ArgumentError.value(
+        updatedItem.name,
+        'name',
+        'Item name cannot be empty.',
+      );
     }
     _allItems[index] = PackingItem(
       id: updatedItem.id,
@@ -145,16 +150,16 @@ class ChecklistProvider extends ChangeNotifier {
       categories.contains(category) ? category : 'Other';
 
   PackingItem _copy(PackingItem item, {required bool isPacked}) => PackingItem(
-        id: item.id,
-        tripId: item.tripId,
-        travelerId: item.travelerId,
-        name: item.name,
-        category: item.category,
-        quantity: item.quantity,
-        isPacked: isPacked,
-        isShared: item.isShared,
-        isReturnItem: item.isReturnItem,
-      );
+    id: item.id,
+    tripId: item.tripId,
+    travelerId: item.travelerId,
+    name: item.name,
+    category: item.category,
+    quantity: item.quantity,
+    isPacked: isPacked,
+    isShared: item.isShared,
+    isReturnItem: item.isReturnItem,
+  );
 
   List<_Suggestion> _suggestionsFor(Trip trip) {
     final days = trip.durationDays.clamp(1, 60).toInt();

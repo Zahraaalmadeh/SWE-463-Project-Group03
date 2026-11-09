@@ -30,7 +30,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   @override
   void initState() {
     super.initState();
-    _trip = widget.trip ??
+    _trip =
+        widget.trip ??
         Trip(
           id: 'quick-trip',
           name: 'My trip',
@@ -55,6 +56,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final trip = context.watch<ChecklistProvider>().selectedTrip;
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F5),
       appBar: AppBar(
@@ -68,7 +70,10 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               if (action == 'clear') _confirmRemovePacked();
             },
             itemBuilder: (_) => const [
-              PopupMenuItem(value: 'generate', child: Text('Regenerate checklist')),
+              PopupMenuItem(
+                value: 'generate',
+                child: Text('Regenerate checklist'),
+              ),
               PopupMenuItem(value: 'clear', child: Text('Remove packed items')),
             ],
           ),
@@ -138,7 +143,11 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               color: Colors.white.withValues(alpha: .16),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.luggage_outlined, color: Colors.white, size: 28),
+            child: const Icon(
+              Icons.luggage_outlined,
+              color: Colors.white,
+              size: 28,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -161,7 +170,10 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                   style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
                 const SizedBox(height: 3),
-                Text('Departing $dateLabel', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                Text(
+                  'Departing $dateLabel',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -191,9 +203,19 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
           Row(
             children: [
               const Expanded(
-                child: Text('Packing progress', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                child: Text(
+                  'Packing progress',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                ),
               ),
-              Text('$percent%', style: const TextStyle(color: _green, fontWeight: FontWeight.w800, fontSize: 18)),
+              Text(
+                '$percent%',
+                style: const TextStyle(
+                  color: _green,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -207,42 +229,54 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          Text('${checklist.packedCount} of ${checklist.totalCount} items packed', style: const TextStyle(color: _muted, fontSize: 13)),
+          Text(
+            '${checklist.packedCount} of ${checklist.totalCount} items packed',
+            style: const TextStyle(color: _muted, fontSize: 13),
+          ),
         ],
       ),
     );
   }
 
   Widget _sectionTitle(int count) => Row(
-        children: [
-          const Expanded(
-            child: Text('Your items', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-          ),
-          Text('$count items', style: const TextStyle(color: _muted, fontSize: 13)),
-        ],
-      );
+    children: [
+      const Expanded(
+        child: Text(
+          'Your items',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+        ),
+      ),
+      Text('$count items', style: const TextStyle(color: _muted, fontSize: 13)),
+    ],
+  );
 
   Widget _searchField() => TextField(
-        controller: _searchController,
-        onChanged: (value) => setState(() => _query = value.trim().toLowerCase()),
-        decoration: InputDecoration(
-          hintText: 'Search your checklist',
-          prefixIcon: const Icon(Icons.search, color: _muted),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 0),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: const BorderSide(color: Color(0xFFE7EAE5)),
-          ),
-        ),
-      );
+    controller: _searchController,
+    onChanged: (value) => setState(() => _query = value.trim().toLowerCase()),
+    decoration: InputDecoration(
+      hintText: 'Search your checklist',
+      prefixIcon: const Icon(Icons.search, color: _muted),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(color: Color(0xFFE7EAE5)),
+      ),
+    ),
+  );
 
   Widget _statusChips(ChecklistProvider checklist) {
     final tabs = <(_ChecklistFilter, String)>[
       (_ChecklistFilter.all, 'All (${checklist.totalCount})'),
-      (_ChecklistFilter.toPack, 'To pack (${checklist.totalCount - checklist.packedCount})'),
+      (
+        _ChecklistFilter.toPack,
+        'To pack (${checklist.totalCount - checklist.packedCount})',
+      ),
       (_ChecklistFilter.packed, 'Packed (${checklist.packedCount})'),
     ];
     return SingleChildScrollView(
@@ -257,8 +291,15 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               selected: selected,
               onSelected: (_) => setState(() => _statusFilter = tab.$1),
               selectedColor: const Color(0xFFE0ECE5),
-              labelStyle: TextStyle(color: selected ? _green : _muted, fontWeight: FontWeight.w600),
-              side: BorderSide(color: selected ? const Color(0xFFB7CCBF) : const Color(0xFFE7EAE5)),
+              labelStyle: TextStyle(
+                color: selected ? _green : _muted,
+                fontWeight: FontWeight.w600,
+              ),
+              side: BorderSide(
+                color: selected
+                    ? const Color(0xFFB7CCBF)
+                    : const Color(0xFFE7EAE5),
+              ),
             ),
           );
         }).toList(),
@@ -267,7 +308,12 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   }
 
   Widget _categoryChips(List<PackingItem> items) {
-    final categories = <String>['All', ...ChecklistProvider.categories.where((category) => items.any((item) => item.category == category))];
+    final categories = <String>[
+      'All',
+      ...ChecklistProvider.categories.where(
+        (category) => items.any((item) => item.category == category),
+      ),
+    ];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -290,9 +336,11 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     );
   }
 
-  List<PackingItem> _visibleItems(List<PackingItem> items) => items.where((item) {
+  List<PackingItem> _visibleItems(List<PackingItem> items) =>
+      items.where((item) {
         final matchesQuery = item.name.toLowerCase().contains(_query);
-        final matchesCategory = _categoryFilter == 'All' || item.category == _categoryFilter;
+        final matchesCategory =
+            _categoryFilter == 'All' || item.category == _categoryFilter;
         final matchesStatus = switch (_statusFilter) {
           _ChecklistFilter.all => true,
           _ChecklistFilter.toPack => !item.isPacked,
@@ -317,7 +365,9 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
             Checkbox(
               value: item.isPacked,
               activeColor: _green,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(5),
+              ),
               onChanged: (_) => checklist.togglePacked(item.id),
             ),
             Expanded(
@@ -333,8 +383,12 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
-                          decoration: item.isPacked ? TextDecoration.lineThrough : null,
-                          color: item.isPacked ? _muted : const Color(0xFF252A27),
+                          decoration: item.isPacked
+                              ? TextDecoration.lineThrough
+                              : null,
+                          color: item.isPacked
+                              ? _muted
+                              : const Color(0xFF252A27),
                         ),
                       ),
                       const SizedBox(height: 5),
@@ -342,16 +396,32 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         children: [
                           _categoryIcon(item.category, size: 14),
                           const SizedBox(width: 5),
-                          Text(item.category, style: const TextStyle(color: _muted, fontSize: 12)),
+                          Text(
+                            item.category,
+                            style: const TextStyle(color: _muted, fontSize: 12),
+                          ),
                           if (item.quantity > 1) ...[
                             const SizedBox(width: 9),
-                            Text('Qty ${item.quantity}', style: const TextStyle(color: _muted, fontSize: 12)),
+                            Text(
+                              'Qty ${item.quantity}',
+                              style: const TextStyle(
+                                color: _muted,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                           if (item.isShared) ...[
                             const SizedBox(width: 8),
-                            const Icon(Icons.people_outline, size: 14, color: _muted),
+                            const Icon(
+                              Icons.people_outline,
+                              size: 14,
+                              color: _muted,
+                            ),
                             const SizedBox(width: 3),
-                            const Text('Shared', style: TextStyle(color: _muted, fontSize: 12)),
+                            const Text(
+                              'Shared',
+                              style: TextStyle(color: _muted, fontSize: 12),
+                            ),
                           ],
                         ],
                       ),
@@ -378,33 +448,37 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   }
 
   Widget _emptyResults() => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 34),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE7EAE5)),
+    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 34),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: const Color(0xFFE7EAE5)),
+    ),
+    child: Column(
+      children: [
+        const Icon(Icons.checklist_outlined, size: 38, color: _muted),
+        const SizedBox(height: 10),
+        Text(
+          _query.isNotEmpty ? 'No matching items' : 'Nothing here yet',
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
-        child: Column(
-          children: [
-            const Icon(Icons.checklist_outlined, size: 38, color: _muted),
-            const SizedBox(height: 10),
-            Text(
-              _query.isNotEmpty ? 'No matching items' : 'Nothing here yet',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              _query.isNotEmpty ? 'Try another search or filter.' : 'Add an item or generate a fresh checklist.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: _muted, fontSize: 13),
-            ),
-          ],
+        const SizedBox(height: 5),
+        Text(
+          _query.isNotEmpty
+              ? 'Try another search or filter.'
+              : 'Add an item or generate a fresh checklist.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: _muted, fontSize: 13),
         ),
-      );
+      ],
+    ),
+  );
 
   Future<void> _showItemEditor([PackingItem? item]) async {
     final nameController = TextEditingController(text: item?.name ?? '');
-    final quantityController = TextEditingController(text: '${item?.quantity ?? 1}');
+    final quantityController = TextEditingController(
+      text: '${item?.quantity ?? 1}',
+    );
     var category = item?.category ?? 'Clothing';
     var isShared = item?.isShared ?? false;
     final formKey = GlobalKey<FormState>();
@@ -425,16 +499,24 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                     autofocus: true,
                     textCapitalization: TextCapitalization.sentences,
                     decoration: const InputDecoration(labelText: 'Item name'),
-                    validator: (value) => value == null || value.trim().isEmpty ? 'Enter an item name' : null,
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Enter an item name'
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: category,
                     decoration: const InputDecoration(labelText: 'Category'),
                     items: ChecklistProvider.categories
-                        .map((value) => DropdownMenuItem(value: value, child: Text(value)))
+                        .map(
+                          (value) => DropdownMenuItem(
+                            value: value,
+                            child: Text(value),
+                          ),
+                        )
                         .toList(),
-                    onChanged: (value) => setDialogState(() => category = value ?? 'Other'),
+                    onChanged: (value) =>
+                        setDialogState(() => category = value ?? 'Other'),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -443,24 +525,31 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                     decoration: const InputDecoration(labelText: 'Quantity'),
                     validator: (value) {
                       final quantity = int.tryParse(value ?? '');
-                      return quantity == null || quantity < 1 ? 'Enter a quantity of at least 1' : null;
+                      return quantity == null || quantity < 1
+                          ? 'Enter a quantity of at least 1'
+                          : null;
                     },
                   ),
                   SwitchListTile.adaptive(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Shared item'),
                     value: isShared,
-                    onChanged: (value) => setDialogState(() => isShared = value),
+                    onChanged: (value) =>
+                        setDialogState(() => isShared = value),
                   ),
                 ],
               ),
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () {
-                if (formKey.currentState?.validate() ?? false) Navigator.pop(dialogContext, true);
+                if (formKey.currentState?.validate() ?? false)
+                  Navigator.pop(dialogContext, true);
               },
               child: const Text('Save'),
             ),
@@ -479,19 +568,26 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       final name = nameController.text.trim();
       final quantity = int.parse(quantityController.text);
       if (item == null) {
-        checklist.addItem(name: name, category: category, quantity: quantity, isShared: isShared);
-      } else {
-        checklist.updateItem(PackingItem(
-          id: item.id,
-          tripId: item.tripId,
-          travelerId: item.travelerId,
+        checklist.addItem(
           name: name,
           category: category,
           quantity: quantity,
-          isPacked: item.isPacked,
           isShared: isShared,
-          isReturnItem: item.isReturnItem,
-        ));
+        );
+      } else {
+        checklist.updateItem(
+          PackingItem(
+            id: item.id,
+            tripId: item.tripId,
+            travelerId: item.travelerId,
+            name: name,
+            category: category,
+            quantity: quantity,
+            isPacked: item.isPacked,
+            isShared: isShared,
+            isReturnItem: item.isReturnItem,
+          ),
+        );
       }
     }
     nameController.dispose();
@@ -509,21 +605,32 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Align(alignment: Alignment.centerLeft, child: Text('What kind of trip are you packing for?')),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('What kind of trip are you packing for?'),
+              ),
               const SizedBox(height: 10),
               DropdownButtonFormField<TripType>(
                 value: type,
                 decoration: const InputDecoration(labelText: 'Trip type'),
                 items: TripType.values
-                    .map((value) => DropdownMenuItem(value: value, child: Text(value.label)))
+                    .map(
+                      (value) => DropdownMenuItem(
+                        value: value,
+                        child: Text(value.label),
+                      ),
+                    )
                     .toList(),
-                onChanged: (value) => setDialogState(() => type = value ?? TripType.other),
+                onChanged: (value) =>
+                    setDialogState(() => type = value ?? TripType.other),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: daysController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Trip duration (days)'),
+                decoration: const InputDecoration(
+                  labelText: 'Trip duration (days)',
+                ),
                 validator: (value) {
                   final days = int.tryParse(value ?? '');
                   return days == null || days < 1 || days > 60
@@ -534,7 +641,10 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () {
                 final days = int.tryParse(daysController.text);
@@ -565,7 +675,9 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       _statusFilter = _ChecklistFilter.all;
     });
     context.read<ChecklistProvider>().generateChecklist(_trip);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Your checklist has been regenerated.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Your checklist has been regenerated.')),
+    );
   }
 
   Future<void> _confirmDelete(PackingItem item) async {
@@ -575,8 +687,14 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         title: const Text('Delete item?'),
         content: Text('Remove “${item.name}” from this checklist?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Delete')),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -588,17 +706,27 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   Future<void> _confirmRemovePacked() async {
     final checklist = context.read<ChecklistProvider>();
     if (checklist.packedCount == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('There are no packed items to remove.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('There are no packed items to remove.')),
+      );
       return;
     }
     final shouldRemove = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Remove packed items?'),
-        content: Text('This removes ${checklist.packedCount} packed ${checklist.packedCount == 1 ? 'item' : 'items'} from the checklist.'),
+        content: Text(
+          'This removes ${checklist.packedCount} packed ${checklist.packedCount == 1 ? 'item' : 'items'} from the checklist.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Keep them')),
-          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Remove')),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep them'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Remove'),
+          ),
         ],
       ),
     );
@@ -608,9 +736,19 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   }
 
   String _month(int month) => const [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-      ][month - 1];
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ][month - 1];
 
   Widget _categoryIcon(String category, {double size = 20}) {
     final icon = switch (category) {
@@ -630,11 +768,11 @@ enum _ChecklistFilter { all, toPack, packed }
 
 extension on TripType {
   String get label => switch (this) {
-        TripType.beach => 'Beach',
-        TripType.business => 'Business',
-        TripType.family => 'Family',
-        TripType.camping => 'Camping',
-        TripType.city => 'City break',
-        TripType.other => 'Other',
-      };
+    TripType.beach => 'Beach',
+    TripType.business => 'Business',
+    TripType.family => 'Family',
+    TripType.camping => 'Camping',
+    TripType.city => 'City break',
+    TripType.other => 'Other',
+  };
 }

@@ -26,12 +26,23 @@ class DatabaseService {
       databasePath,
       version: _databaseVersion,
       onConfigure: (database) async {
+        // SQLite ignores FOREIGN KEY constraints unless this is set per
+        // connection; without it, the ON DELETE CASCADE clauses below
+        // (travelers/packing_items/template_items) silently do nothing.
         await database.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _createTables,
     );
     _database = database;
     return database;
+  }
+
+  /// Returns every row of the `trips` table, soonest departure first.
+  /// Providers turn these raw rows into `Trip` objects; this service stays
+  /// unaware of the domain models.
+  Future<List<Map<String, Object?>>> getTrips() async {
+    final db = await database;
+    return db.query('trips', orderBy: 'departure_date ASC');
   }
 
   Future<void> _createTables(Database database, int version) async {
