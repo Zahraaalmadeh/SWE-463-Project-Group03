@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../app_routes.dart';
 import '../models/trip.dart';
-import '../providers/checklist_provider.dart';
 import '../providers/trip_provider.dart';
 import '../widgets/home_trip_card.dart';
 
@@ -158,10 +157,10 @@ class _TripList extends StatelessWidget {
     );
   }
 
-  /// Stores the selected trip ID for checklist actions and passes the trip to
-  /// the checklist screen so it can generate the correct suggestions.
+  /// Opens the tapped trip's checklist. ChecklistScreen takes the trip as its
+  /// route argument and selects it on ChecklistProvider itself, the same way
+  /// Create Trip's "Generate Packing List" opens it.
   void _openChecklist(BuildContext context, Trip trip) {
-    context.read<ChecklistProvider>().selectTrip(trip.id);
     Navigator.of(context).pushNamed(AppRoutes.checklist, arguments: trip);
   }
 
