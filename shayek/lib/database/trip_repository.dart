@@ -12,6 +12,8 @@ abstract interface class TripRepository {
   Future<List<Trip>> getTrips();
 
   Future<Trip?> getTrip(String id);
+
+  Future<void> attachList(String tripId, String? listId);
 }
 
 /// Stores trips in the `trips` table created by [DatabaseService].
@@ -51,5 +53,16 @@ class SqfliteTripRepository implements TripRepository {
       limit: 1,
     );
     return rows.isEmpty ? null : Trip.fromMap(rows.first);
+  }
+
+  @override
+  Future<void> attachList(String tripId, String? listId) async {
+    final database = await _databaseService.database;
+    await database.update(
+      _table,
+      {'list_id': listId},
+      where: 'id = ?',
+      whereArgs: [tripId],
+    );
   }
 }

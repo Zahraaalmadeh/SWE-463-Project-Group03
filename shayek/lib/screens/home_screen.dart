@@ -59,9 +59,9 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1080),
+            constraints: const BoxConstraints(maxWidth: 1280),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(40, 32, 40, 40),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

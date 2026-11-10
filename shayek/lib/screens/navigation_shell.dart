@@ -29,17 +29,21 @@ class _NavigationShellState extends State<NavigationShell> {
     const screens = [HomeScreen(), TemplatesScreen()];
 
     return Scaffold(
-      body: screens[_selectedIndex],
-      bottomNavigationBar: SharedBottomNavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          if (index == _selectedIndex) return;
-          if (index == 0) {
-            Navigator.of(context).pushReplacementNamed(AppRoutes.home);
-          } else {
-            Navigator.of(context).pushReplacementNamed(AppRoutes.templates);
-          }
-        },
+      backgroundColor: const Color(0xFFF9FAF6),
+      body: Column(
+        children: [
+          SharedSiteHeader(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) {
+              if (index == _selectedIndex) return;
+              Navigator.of(context).pushReplacementNamed(
+                index == 0 ? AppRoutes.home : AppRoutes.templates,
+              );
+            },
+          ),
+          Expanded(child: screens[_selectedIndex]),
+          const SiteFooter(),
+        ],
       ),
     );
   }
