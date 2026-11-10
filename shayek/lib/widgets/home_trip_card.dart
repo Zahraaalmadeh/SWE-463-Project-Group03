@@ -108,6 +108,7 @@ class _TripImagePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
+      width: double.infinity,
       height: 180,
       child: DecoratedBox(
         // Temporary local scenery until the team adds approved trip photos.

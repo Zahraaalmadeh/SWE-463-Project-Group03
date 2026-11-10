@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/packing_item.dart';
+import '../models/packing_template.dart';
 import '../models/trip.dart';
 
 /// Owns packing items and checklist actions for the selected trip.
@@ -59,6 +60,25 @@ class ChecklistProvider extends ChangeNotifier {
         ),
       );
     }
+
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void applyTemplate(Trip trip, PackingTemplate template) {
+    _selectedTripId = trip.id;
+    _allItems.removeWhere((item) => item.tripId == trip.id);
+    _allItems.addAll(
+      template.items.map(
+        (item) => PackingItem(
+          id: _newId(),
+          tripId: trip.id,
+          name: item.name,
+          category: item.category,
+          quantity: item.quantity,
+        ),
+      ),
+    );
     _errorMessage = null;
     notifyListeners();
   }

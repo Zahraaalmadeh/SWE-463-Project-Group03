@@ -5,12 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../app_routes.dart';
+import '../models/packing_template.dart';
 import '../models/trip.dart';
 import '../providers/trip_provider.dart';
 
 /// Collects the details of a new trip before its packing list is generated.
 class CreateTripScreen extends StatefulWidget {
-  const CreateTripScreen({super.key});
+  const CreateTripScreen({super.key, this.template});
+
+  final PackingTemplate? template;
 
   static const minDurationDays = 1;
   static const maxDurationDays = 90;
@@ -33,6 +36,16 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   String? _nameError;
   String? _dateError;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final template = widget.template;
+    if (template != null) {
+      _nameController.text = template.name;
+      _selectedType = template.type;
+    }
+  }
 
   @override
   void dispose() {
@@ -59,6 +72,31 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
                     children: [
                       const Text('Where are you headed?', style: _Text.heading),
+                      if (widget.template != null) ...[
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFC5EAF6),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 9,
+                              ),
+                              child: Text(
+                                'Using list · ${widget.template!.name}',
+                                style: const TextStyle(
+                                  color: Color(0xFF214A5A),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 28),
                       const _FieldLabel('Trip name'),
                       TextField(
@@ -245,6 +283,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         durationDays: _durationDays,
         departureDate: _departureDate!,
         travelerCount: _travelerCount,
+        listId: null,
       );
       if (!mounted) return;
       messenger.showSnackBar(
@@ -254,7 +293,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       // route means Back from the checklist returns to Home, not the form.
       await navigator.pushReplacementNamed(
         AppRoutes.checklist,
-        arguments: trip,
+        arguments: ChecklistRouteArgs(trip: trip, template: widget.template),
       );
     } catch (error) {
       debugPrint('Failed to create trip: $error');
