@@ -6,6 +6,7 @@ import '../models/packing_template.dart';
 import '../models/trip.dart';
 import '../providers/template_provider.dart';
 import '../providers/trip_provider.dart';
+import '../theme/app_theme.dart';
 import 'template_editor_screen.dart';
 
 class TemplatesScreen extends StatefulWidget {
@@ -16,9 +17,8 @@ class TemplatesScreen extends StatefulWidget {
 }
 
 class _TemplatesScreenState extends State<TemplatesScreen> {
-  static const _background = Color(0xFFF9FAF6);
-  static const _ink = Color(0xFF1A2925);
-  static const _muted = Color(0xFF607168);
+  static const _background = AppColors.background;
+  static const _muted = AppColors.muted;
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -51,9 +51,9 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1280),
+            constraints: const BoxConstraints(maxWidth: 1160),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+              padding: const EdgeInsets.fromLTRB(24, 44, 24, 0),
               child: Consumer<TemplateProvider>(
                 builder: (context, provider, _) {
                   final templates = provider.templates;
@@ -72,41 +72,38 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '${templates.length} saved',
-                        style: const TextStyle(
-                          color: _muted,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.end,
+                        spacing: 24,
+                        runSpacing: 16,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${templates.length} saved',
+                                style: AppText.lead,
+                              ),
+                              const SizedBox(height: 6),
+                              const Text('Your Lists', style: AppText.display),
+                            ],
+                          ),
+                          FilledButton.icon(
+                            onPressed: _createTemplate,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Create List'),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Your Lists',
-                        style: TextStyle(
-                          color: _ink,
-                          fontFamily: 'Georgia',
-                          fontSize: 38,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      FilledButton.icon(
-                        onPressed: _createTemplate,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Create List'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF456F60),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 32),
                       Expanded(
                         child: provider.isLoading
                             ? const Center(child: CircularProgressIndicator())
                             : provider.errorMessage != null
                             ? _ErrorState(message: provider.errorMessage!)
                             : ListView(
-                                padding: const EdgeInsets.only(bottom: 24),
+                                padding: const EdgeInsets.only(bottom: 40),
                                 children: [
                                   if (ownLists.isEmpty)
                                     _EmptyState(
@@ -116,76 +113,94 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
                                   else ...[
                                     const Text(
                                       'Your Packing Lists',
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                      style: AppText.title,
                                     ),
-                                    const SizedBox(height: 12),
+                                    const SizedBox(height: 16),
+                                    _CardGrid(
+                                      children: [
+                                        for (final template in ownLists)
+                                          _TemplateCard(
+                                            template: template,
+                                            onUse: () => _attachList(template),
+                                            onRename: () =>
+                                                _renameTemplate(template),
+                                            onDelete: () =>
+                                                _deleteTemplate(template),
+                                            onVisibilityChanged: (visibility) =>
+                                                _changeVisibility(
+                                                  template,
+                                                  visibility,
+                                                ),
+                                          ),
+                                      ],
+                                    ),
                                   ],
-                                  ...ownLists.map(
-                                    (template) => Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 20,
+                                  const SizedBox(height: 44),
+                                  const Divider(color: AppColors.line),
+                                  const SizedBox(height: 36),
+                                  Wrap(
+                                    alignment: WrapAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    spacing: 24,
+                                    runSpacing: 16,
+                                    children: [
+                                      const Text(
+                                        'Search Packing Lists',
+                                        style: AppText.title,
                                       ),
-                                      child: _TemplateCard(
-                                        template: template,
-                                        onUse: () => _attachList(template),
-                                        onRename: () =>
-                                            _renameTemplate(template),
-                                        onDelete: () =>
-                                            _deleteTemplate(template),
-                                        onVisibilityChanged: (visibility) =>
-                                            _changeVisibility(
-                                              template,
-                                              visibility,
+                                      ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 420,
+                                        ),
+                                        child: TextField(
+                                          controller: _searchController,
+                                          decoration: InputDecoration(
+                                            prefixIcon: const Icon(
+                                              Icons.search,
+                                              color: _muted,
                                             ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  const Text(
-                                    'Search Packing Lists',
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  TextField(
-                                    controller: _searchController,
-                                    decoration: const InputDecoration(
-                                      prefixIcon: Icon(Icons.search),
-                                      hintText: 'Search by name, type, or item',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(20),
+                                            hintText:
+                                                'Search by name, type, or item',
+                                            border: _pillBorder(
+                                              AppColors.fieldBorder,
+                                            ),
+                                            enabledBorder: _pillBorder(
+                                              AppColors.fieldBorder,
+                                            ),
+                                            focusedBorder: _pillBorder(
+                                              AppColors.primary,
+                                              2,
+                                            ),
+                                          ),
+                                          onChanged: (value) => setState(
+                                            () => _searchQuery = value,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    onChanged: (value) =>
-                                        setState(() => _searchQuery = value),
+                                    ],
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 20),
                                   if (publicLists.isEmpty)
                                     const Text(
                                       'No public lists match your search.',
-                                      style: TextStyle(color: _muted),
+                                      style: TextStyle(
+                                        color: _muted,
+                                        fontSize: 15,
+                                      ),
                                     )
                                   else
-                                    ...publicLists.map(
-                                      (template) => Padding(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 20,
-                                        ),
-                                        child: _TemplateCard(
-                                          template: template,
-                                          onUse: () => _attachList(template),
-                                          onRename: () {},
-                                          onDelete: () {},
-                                          onVisibilityChanged: (_) {},
-                                        ),
-                                      ),
+                                    _CardGrid(
+                                      children: [
+                                        for (final template in publicLists)
+                                          _TemplateCard(
+                                            template: template,
+                                            onUse: () => _attachList(template),
+                                            onRename: () {},
+                                            onDelete: () {},
+                                            onVisibilityChanged: (_) {},
+                                          ),
+                                      ],
                                     ),
                                 ],
                               ),
@@ -200,6 +215,12 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
       ),
     );
   }
+
+  static OutlineInputBorder _pillBorder(Color color, [double width = 1.5]) =>
+      OutlineInputBorder(
+        borderRadius: BorderRadius.circular(99),
+        borderSide: BorderSide(color: color, width: width),
+      );
 
   void _startTrip() {
     Navigator.of(context).pushNamed(AppRoutes.createTrip);
@@ -239,7 +260,6 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
                 .toList(),
           ),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
     );
     if (!mounted || trip == null) return;
@@ -280,7 +300,7 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
         insetPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(28)),
+          borderRadius: BorderRadius.all(Radius.circular(22)),
         ),
         child: SizedBox(width: 720, child: TemplateEditorScreen(isModal: true)),
       ),
@@ -355,6 +375,37 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
   }
 }
 
+/// Lays cards out in up to three equal columns, one column on narrow windows.
+class _CardGrid extends StatelessWidget {
+  const _CardGrid({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 24.0;
+        final width = constraints.maxWidth;
+        final columns = width >= 1000
+            ? 3
+            : width >= 640
+            ? 2
+            : 1;
+        final cardWidth = (width - spacing * (columns - 1)) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final child in children)
+              SizedBox(width: cardWidth, child: child),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _TemplateCard extends StatelessWidget {
   const _TemplateCard({
     required this.template,
@@ -373,67 +424,46 @@ class _TemplateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final itemNames = template.items.map((item) => item.name).take(6).toList();
+    final colors = TripTypeColors.of(template.type);
+    final isPublic = template.visibility == ListVisibility.public;
     return Container(
-      padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+      padding: const EdgeInsets.fromLTRB(24, 20, 12, 20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFE0E7E1)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 16,
-            offset: Offset(0, 7),
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFC5EAF6),
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: const Icon(
-                  Icons.widgets_outlined,
-                  color: Color(0xFF245565),
-                  size: 32,
-                ),
-              ),
-              const SizedBox(width: 18),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _typeLabel(template.type),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF1A2925),
-                        fontFamily: 'Georgia',
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _typeLabel(template.type),
+                        style: AppText.eyebrow(colors.onTint),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${template.items.length} items · ${template.visibility.name}',
-                      style: const TextStyle(
-                        color: Color(0xFF607168),
-                        fontSize: 16,
+                      const SizedBox(height: 6),
+                      Text(
+                        template.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.cardTitle.copyWith(fontSize: 24),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               PopupMenuButton<String>(
                 tooltip: 'List actions',
+                icon: const Icon(Icons.more_horiz, color: AppColors.muted),
+                position: PopupMenuPosition.under,
                 onSelected: (action) {
                   if (action == 'rename') onRename();
                   if (action == 'delete') onDelete();
@@ -464,45 +494,60 @@ class _TemplateCard extends StatelessWidget {
             ],
           ),
           if (itemNames.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            Align(
-              alignment: Alignment.centerLeft,
+            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
               child: Wrap(
-                spacing: 10,
+                spacing: 8,
                 runSpacing: 8,
-                children: itemNames
-                    .map(
-                      (itemName) => Chip(
-                        label: Text(itemName),
-                        backgroundColor: const Color(0xFFDCECE2),
-                        labelStyle: const TextStyle(
-                          color: Color(0xFF456F60),
-                          fontWeight: FontWeight.w600,
-                        ),
-                        side: BorderSide.none,
+                children: [
+                  for (final itemName in itemNames)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
                       ),
-                    )
-                    .toList(),
+                      decoration: BoxDecoration(
+                        color: AppColors.sand,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(
+                        itemName,
+                        style: const TextStyle(
+                          color: AppColors.ink,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
           const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: onUse,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1A2925),
-                side: const BorderSide(color: Color(0xFFDCE4DE)),
-                padding: const EdgeInsets.symmetric(vertical: 17),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+          const Divider(height: 1, color: AppColors.divider),
+          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Row(
+              children: [
+                Icon(
+                  isPublic ? Icons.public : Icons.lock_outline,
+                  size: 16,
+                  color: isPublic ? AppColors.shared : AppColors.muted,
                 ),
-              ),
-              child: const Text(
-                'Use List',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-              ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '${template.items.length} items · ${template.visibility.name}',
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                OutlinedButton(onPressed: onUse, child: const Text('Use List')),
+              ],
             ),
           ),
         ],
@@ -524,65 +569,53 @@ class _EmptyState extends StatelessWidget {
   final VoidCallback onStartTrip;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 48, 24, 44),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFE0E7E1)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircleAvatar(
-            radius: 54,
-            backgroundColor: Color(0xFFDCECE2),
-            child: Icon(
-              Icons.widgets_outlined,
-              size: 48,
-              color: Color(0xFF456F60),
-            ),
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.fromLTRB(24, 48, 24, 40),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: AppColors.fieldBorder, width: 1.5),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            shape: BoxShape.circle,
           ),
-          const SizedBox(height: 28),
-          const Text(
-            'No saved templates yet',
-            style: TextStyle(
-              color: Color(0xFF1A2925),
-              fontFamily: 'Georgia',
-              fontSize: 30,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
+          child: const Icon(
+            Icons.checklist_rtl_outlined,
+            size: 32,
+            color: AppColors.accent,
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'Save any packing list as a template to reuse it on your next trip in one tap.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFF607168),
-              fontSize: 17,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: onCreateTemplate,
-            icon: const Icon(Icons.add),
-            label: const Text('Create Template'),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF456F60),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            ),
-          ),
-          const SizedBox(height: 14),
-          TextButton(
-            onPressed: onStartTrip,
-            child: const Text('Or start a trip'),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 22),
+        const Text(
+          'No saved templates yet',
+          style: AppText.title,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          'Save any packing list as a template to reuse it on your next trip in one tap.',
+          textAlign: TextAlign.center,
+          style: AppText.lead,
+        ),
+        const SizedBox(height: 26),
+        FilledButton.icon(
+          onPressed: onCreateTemplate,
+          icon: const Icon(Icons.add),
+          label: const Text('Create Template'),
+        ),
+        const SizedBox(height: 10),
+        TextButton(
+          onPressed: onStartTrip,
+          child: const Text('Or start a trip'),
+        ),
+      ],
     ),
   );
 }
@@ -594,6 +627,6 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Text(message, style: const TextStyle(color: Colors.red)),
+    child: Text(message, style: const TextStyle(color: AppColors.error)),
   );
 }

@@ -8,6 +8,7 @@ import '../app_routes.dart';
 import '../models/packing_template.dart';
 import '../models/trip.dart';
 import '../providers/trip_provider.dart';
+import '../theme/app_theme.dart';
 
 /// Collects the details of a new trip before its packing list is generated.
 class CreateTripScreen extends StatefulWidget {
@@ -60,7 +61,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
+            constraints: const BoxConstraints(maxWidth: 680),
             child: Column(
               children: [
                 const Padding(
@@ -71,14 +72,21 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
                     children: [
-                      const Text('Where are you headed?', style: _Text.heading),
+                      Text(
+                        'Where are you headed?',
+                        // Big on desktop, compact on phones so the form's
+                        // counters stay on screen without scrolling.
+                        style: MediaQuery.sizeOf(context).width >= 600
+                            ? _Text.heading
+                            : _Text.heading.copyWith(fontSize: 30),
+                      ),
                       if (widget.template != null) ...[
                         const SizedBox(height: 12),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              color: const Color(0xFFC5EAF6),
+                              color: AppColors.highlight,
                               borderRadius: BorderRadius.circular(24),
                             ),
                             child: Padding(
@@ -89,7 +97,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                               child: Text(
                                 'Using list · ${widget.template!.name}',
                                 style: const TextStyle(
-                                  color: Color(0xFF214A5A),
+                                  color: AppColors.ink,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -144,7 +152,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                   CreateTripScreen.maxDurationDays,
                             ),
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 20),
                           Expanded(
                             child: _Counter(
                               label: 'Travelers',
@@ -308,7 +316,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   }
 
   InputDecoration _inputDecoration({String? errorText}) {
-    OutlineInputBorder border(Color color, [double width = 1]) =>
+    OutlineInputBorder border(Color color, [double width = 1.5]) =>
         OutlineInputBorder(
           borderRadius: BorderRadius.circular(_radius),
           borderSide: BorderSide(color: color, width: width),
@@ -322,49 +330,36 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       fillColor: _Palette.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       enabledBorder: border(_Palette.border),
-      focusedBorder: border(_Palette.primary, 1.5),
+      focusedBorder: border(_Palette.primary, 2),
       errorBorder: border(_Palette.error),
-      focusedErrorBorder: border(_Palette.error, 1.5),
+      focusedErrorBorder: border(_Palette.error, 2),
     );
   }
 }
 
-const double _radius = 18;
+const double _radius = 14;
 
 abstract final class _Palette {
-  static const background = Color(0xFFF6F6F1);
-  static const surface = Colors.white;
-  static const border = Color(0xFFE5E7E1);
-  static const ink = Color(0xFF1A2925);
-  static const muted = Color(0xFF6B7A72);
-  static const primary = Color(0xFF436C5B);
-  static const selectedFill = Color(0xFFDAE8DF);
-  static const minusFill = Color(0xFFE9EEEA);
-  static const plusFill = Color(0xFFD6E7DC);
-  static const error = Color(0xFFB3261E);
+  static const background = AppColors.background;
+  static const surface = AppColors.surface;
+  static const border = AppColors.fieldBorder;
+  static const ink = AppColors.ink;
+  static const muted = AppColors.muted;
+  static const primary = AppColors.primary;
+  static const counterFill = AppColors.sand;
+  static const error = AppColors.error;
 }
 
 abstract final class _Text {
   static const title = TextStyle(
-    color: _Palette.ink,
-    fontSize: 17,
-    fontWeight: FontWeight.w500,
-  );
-  static const heading = TextStyle(
-    color: _Palette.ink,
-    fontFamily: 'Georgia',
-    fontFamilyFallback: ['serif'],
-    fontSize: 32,
-    fontWeight: FontWeight.w600,
-    height: 1.15,
-  );
-  static const label = TextStyle(
-    color: _Palette.ink,
+    color: _Palette.muted,
     fontSize: 15,
     fontWeight: FontWeight.w500,
   );
-  static const input = TextStyle(color: _Palette.ink, fontSize: 16);
-  static const hint = TextStyle(color: _Palette.muted, fontSize: 16);
+  static final heading = AppText.display.copyWith(fontSize: 46);
+  static const label = AppText.label;
+  static const input = TextStyle(color: _Palette.ink, fontSize: 17);
+  static const hint = TextStyle(color: _Palette.muted, fontSize: 17);
   static const error = TextStyle(color: _Palette.error, fontSize: 12);
 }
 
@@ -375,10 +370,10 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return const SizedBox(
       height: 48,
-      child: Stack(
-        alignment: Alignment.center,
+      child: Row(
         children: [
-          Align(alignment: Alignment.centerLeft, child: _BackButton()),
+          _BackButton(),
+          SizedBox(width: 14),
           Text('New Trip', style: _Text.title),
         ],
       ),
@@ -391,31 +386,21 @@ class _BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x1A1A2925),
-            blurRadius: 12,
-            offset: Offset(0, 3),
-          ),
-        ],
+    return Material(
+      color: _Palette.surface,
+      shape: const CircleBorder(
+        side: BorderSide(color: _Palette.border, width: 1.5),
       ),
-      child: Material(
-        color: _Palette.surface,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => Navigator.of(context).maybePop(),
-          child: const SizedBox.square(
-            dimension: 44,
-            child: Icon(
-              Icons.arrow_back,
-              color: _Palette.ink,
-              size: 22,
-              semanticLabel: 'Back',
-            ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).maybePop(),
+        child: const SizedBox.square(
+          dimension: 44,
+          child: Icon(
+            Icons.arrow_back,
+            color: _Palette.ink,
+            size: 20,
+            semanticLabel: 'Back',
           ),
         ),
       ),
@@ -447,27 +432,11 @@ class _TripTypeOption {
 
 const _tripTypeOptions = [
   _TripTypeOption(TripType.beach, 'Beach', _BeachUmbrellaIcon()),
-  _TripTypeOption(
-    TripType.business,
-    'Business',
-    Icon(Icons.work_outline, size: 24),
-  ),
-  _TripTypeOption(
-    TripType.family,
-    'Family',
-    Icon(Icons.people_outline, size: 24),
-  ),
+  _TripTypeOption(TripType.business, 'Business', Icon(Icons.work_outline)),
+  _TripTypeOption(TripType.family, 'Family', Icon(Icons.people_outline)),
   _TripTypeOption(TripType.camping, 'Camping', _TentIcon()),
-  _TripTypeOption(
-    TripType.city,
-    'City',
-    Icon(Icons.location_city_outlined, size: 24),
-  ),
-  _TripTypeOption(
-    TripType.other,
-    'Other',
-    Icon(Icons.explore_outlined, size: 24),
-  ),
+  _TripTypeOption(TripType.city, 'City', Icon(Icons.location_city_outlined)),
+  _TripTypeOption(TripType.other, 'Other', Icon(Icons.explore_outlined)),
 ];
 
 class _TripTypeGrid extends StatelessWidget {
@@ -476,33 +445,20 @@ class _TripTypeGrid extends StatelessWidget {
   final TripType selected;
   final ValueChanged<TripType> onSelected;
 
-  static const _columns = 3;
-  static const _gap = 12.0;
-
   @override
   Widget build(BuildContext context) {
-    final rows = <Widget>[];
-    for (var start = 0; start < _tripTypeOptions.length; start += _columns) {
-      final rowOptions = _tripTypeOptions.skip(start).take(_columns).toList();
-      if (rows.isNotEmpty) rows.add(const SizedBox(height: _gap));
-      rows.add(
-        Row(
-          children: [
-            for (var i = 0; i < rowOptions.length; i++) ...[
-              if (i > 0) const SizedBox(width: _gap),
-              Expanded(
-                child: _TripTypeTile(
-                  option: rowOptions[i],
-                  selected: rowOptions[i].type == selected,
-                  onTap: () => onSelected(rowOptions[i].type),
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-    return Column(children: rows);
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final option in _tripTypeOptions)
+          _TripTypeTile(
+            option: option,
+            selected: option.type == selected,
+            onTap: () => onSelected(option.type),
+          ),
+      ],
+    );
   }
 }
 
@@ -519,45 +475,46 @@ class _TripTypeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? _Palette.primary : _Palette.ink;
+    final iconColor = selected
+        ? AppColors.highlight
+        : TripTypeColors.of(option.type).onTint;
 
     return Semantics(
       button: true,
       selected: selected,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        height: 84,
+        height: 44,
         clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: selected ? _Palette.selectedFill : _Palette.surface,
-          borderRadius: BorderRadius.circular(_radius),
-          border: Border.all(
-            color: selected ? _Palette.primary : _Palette.border,
+        decoration: ShapeDecoration(
+          color: selected ? _Palette.ink : _Palette.surface,
+          shape: StadiumBorder(
+            side: BorderSide(
+              color: selected ? _Palette.ink : _Palette.border,
+              width: 1.5,
+            ),
           ),
         ),
         child: Material(
           type: MaterialType.transparency,
           child: InkWell(
             onTap: onTap,
-            child: IconTheme(
-              data: IconThemeData(color: foreground, size: 24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  option.icon,
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        option.label,
-                        style: TextStyle(
-                          color: foreground,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                  IconTheme(
+                    data: IconThemeData(color: iconColor, size: 20),
+                    child: option.icon,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    option.label,
+                    style: TextStyle(
+                      color: selected ? Colors.white : _Palette.ink,
+                      fontSize: 15,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                     ),
                   ),
                 ],
@@ -663,14 +620,14 @@ class _Counter extends StatelessWidget {
           decoration: BoxDecoration(
             color: _Palette.surface,
             borderRadius: BorderRadius.circular(_radius),
-            border: Border.all(color: _Palette.border),
+            border: Border.all(color: _Palette.border, width: 1.5),
           ),
           child: Row(
             children: [
               _CounterButton(
                 icon: Icons.remove,
                 tooltip: 'Decrease $label',
-                fill: _Palette.minusFill,
+                fill: _Palette.counterFill,
                 enabled: canDecrement,
                 onPressed: onDecrement,
               ),
@@ -678,9 +635,7 @@ class _Counter extends StatelessWidget {
                 child: Text(
                   '$value',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: _Palette.ink,
-                    fontSize: 18,
+                  style: AppText.cardTitle.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -688,7 +643,7 @@ class _Counter extends StatelessWidget {
               _CounterButton(
                 icon: Icons.add,
                 tooltip: 'Increase $label',
-                fill: _Palette.plusFill,
+                fill: _Palette.counterFill,
                 enabled: canIncrement,
                 onPressed: onIncrement,
               ),
@@ -723,7 +678,7 @@ class _CounterButton extends StatelessWidget {
         opacity: enabled ? 1 : 0.4,
         child: Material(
           color: fill,
-          borderRadius: BorderRadius.circular(12),
+          shape: const CircleBorder(),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: enabled ? onPressed : null,
@@ -765,6 +720,7 @@ class _DateField extends StatelessWidget {
         borderRadius: BorderRadius.circular(_radius),
         side: BorderSide(
           color: errorText == null ? _Palette.border : _Palette.error,
+          width: 1.5,
         ),
       ),
       clipBehavior: Clip.antiAlias,
@@ -781,7 +737,7 @@ class _DateField extends StatelessWidget {
                   color: _Palette.muted,
                   size: 20,
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 20),
                 Expanded(
                   child: Text(
                     text,
@@ -824,7 +780,7 @@ class _GenerateButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 56,
+      height: 58,
       child: FilledButton.icon(
         onPressed: onPressed,
         icon: isLoading
@@ -843,9 +799,7 @@ class _GenerateButton extends StatelessWidget {
           disabledBackgroundColor: _Palette.primary,
           disabledForegroundColor: Colors.white,
           textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_radius),
-          ),
+          shape: const StadiumBorder(),
         ),
       ),
     );

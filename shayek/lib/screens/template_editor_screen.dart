@@ -6,6 +6,7 @@ import '../models/packing_template.dart';
 import '../models/trip.dart';
 import '../providers/checklist_provider.dart';
 import '../providers/template_provider.dart';
+import '../theme/app_theme.dart';
 
 class TemplateEditorScreen extends StatefulWidget {
   const TemplateEditorScreen({super.key, this.isModal = false});
@@ -33,32 +34,24 @@ class _TemplateEditorScreenState extends State<TemplateEditorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAF6),
+      backgroundColor: AppColors.background,
       appBar: widget.isModal
           ? null
           : AppBar(
-              backgroundColor: const Color(0xFFF9FAF6),
+              backgroundColor: AppColors.background,
               title: const Text('New List'),
             ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+            padding: const EdgeInsets.fromLTRB(32, 32, 32, 32),
             children: [
               if (_validationMessage != null) ...[
                 _ValidationBanner(message: _validationMessage!),
                 const SizedBox(height: 16),
               ],
-              const Text(
-                'Create a packing list',
-                style: TextStyle(
-                  color: Color(0xFF1A2925),
-                  fontFamily: 'Georgia',
-                  fontSize: 34,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const Text('Create a packing list', style: AppText.display),
               const SizedBox(height: 24),
               TextField(
                 controller: _nameController,
@@ -71,21 +64,13 @@ class _TemplateEditorScreenState extends State<TemplateEditorScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Template name',
                   hintText: 'e.g. Ski Weekend',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(18)),
-                  ),
                 ),
               ),
               const SizedBox(height: 20),
               DropdownButtonFormField<TripType>(
                 initialValue: _type,
                 borderRadius: BorderRadius.circular(20),
-                decoration: const InputDecoration(
-                  labelText: 'Trip type',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(18)),
-                  ),
-                ),
+                decoration: const InputDecoration(labelText: 'Trip type'),
                 items: TripType.values
                     .map(
                       (type) => DropdownMenuItem(
@@ -102,12 +87,7 @@ class _TemplateEditorScreenState extends State<TemplateEditorScreen> {
               DropdownButtonFormField<ListVisibility>(
                 initialValue: _visibility,
                 borderRadius: BorderRadius.circular(20),
-                decoration: const InputDecoration(
-                  labelText: 'Visibility',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(18)),
-                  ),
-                ),
+                decoration: const InputDecoration(labelText: 'Visibility'),
                 items: const [
                   DropdownMenuItem(
                     value: ListVisibility.private,
@@ -128,13 +108,7 @@ class _TemplateEditorScreenState extends State<TemplateEditorScreen> {
               Row(
                 children: [
                   const Expanded(
-                    child: Text(
-                      'Packing items',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: Text('Packing items', style: AppText.title),
                   ),
                   OutlinedButton.icon(
                     onPressed: _showItemEditor,
@@ -150,12 +124,13 @@ class _TemplateEditorScreenState extends State<TemplateEditorScreen> {
                   child: Text(
                     'Add at least one item to save this template.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF607168)),
+                    style: TextStyle(color: AppColors.muted, fontSize: 15),
                   ),
                 )
               else
                 ..._items.map(
                   (item) => Card(
+                    margin: const EdgeInsets.only(bottom: 10),
                     child: ListTile(
                       title: Text(item.name),
                       subtitle: Text(
@@ -173,14 +148,16 @@ class _TemplateEditorScreenState extends State<TemplateEditorScreen> {
               FilledButton(
                 onPressed: _isSaving ? null : _save,
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF456F60),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
                 ),
                 child: _isSaving
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Text('Save Template'),
               ),
@@ -250,19 +227,19 @@ class _ValidationBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFE7E3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE9A69D)),
+        color: const Color(0xFFFDECEA),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF1B8B1)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: Color(0xFFB63D32), size: 20),
+          const Icon(Icons.error_outline, color: AppColors.error, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
               style: const TextStyle(
-                color: Color(0xFF8F2F27),
+                color: AppColors.error,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -298,7 +275,6 @@ class _AddTemplateItemDialogState extends State<_AddTemplateItemDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
       clipBehavior: Clip.antiAlias,
       title: const Text('Add packing item'),
       content: Form(
@@ -310,12 +286,7 @@ class _AddTemplateItemDialogState extends State<_AddTemplateItemDialog> {
               TextFormField(
                 controller: _nameController,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Item name',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(18)),
-                  ),
-                ),
+                decoration: const InputDecoration(labelText: 'Item name'),
                 validator: (value) => value == null || value.trim().isEmpty
                     ? 'Enter an item name'
                     : null,
@@ -324,12 +295,7 @@ class _AddTemplateItemDialogState extends State<_AddTemplateItemDialog> {
               DropdownButtonFormField<String>(
                 initialValue: _category,
                 borderRadius: BorderRadius.circular(20),
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(18)),
-                  ),
-                ),
+                decoration: const InputDecoration(labelText: 'Category'),
                 items: ChecklistProvider.categories
                     .map(
                       (value) =>
@@ -348,9 +314,6 @@ class _AddTemplateItemDialogState extends State<_AddTemplateItemDialog> {
                   decoration: const InputDecoration(
                     labelText: 'Custom category (optional)',
                     hintText: 'e.g. Hiking gear',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(18)),
-                    ),
                   ),
                 ),
               ],
@@ -358,12 +321,7 @@ class _AddTemplateItemDialogState extends State<_AddTemplateItemDialog> {
               TextFormField(
                 controller: _quantityController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Quantity',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(18)),
-                  ),
-                ),
+                decoration: const InputDecoration(labelText: 'Quantity'),
                 validator: (value) =>
                     int.tryParse(value ?? '') == null || int.parse(value!) < 1
                     ? 'Enter a quantity of at least 1'

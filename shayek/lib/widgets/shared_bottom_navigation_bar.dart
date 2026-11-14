@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 /// Bottom navigation shared by the Home and Templates tabs throughout Shayek.
 ///
 /// Sized and centered for desktop: a compact floating pill instead of a
@@ -86,6 +88,8 @@ class SharedBottomNavigationBar extends StatelessWidget {
   }
 }
 
+/// Top bar shared by Home, Lists and the checklist: logo on the left, the two
+/// main destinations as underlined text links.
 class SharedSiteHeader extends StatelessWidget {
   const SharedSiteHeader({
     required this.selectedIndex,
@@ -98,51 +102,41 @@ class SharedSiteHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF9FAF6),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1280),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final navigation = Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _SiteNavButton(
-                    label: 'Home',
-                    icon: Icons.home_outlined,
-                    selected: selectedIndex == 0,
-                    onPressed: () => onDestinationSelected(0),
-                  ),
-                  const SizedBox(width: 8),
-                  _SiteNavButton(
-                    label: 'Lists',
-                    icon: Icons.view_list_outlined,
-                    selected: selectedIndex == 1,
-                    onPressed: () => onDestinationSelected(1),
-                  ),
-                ],
-              );
-              const brand = Text(
-                'Shayek',
-                style: TextStyle(
-                  color: Color(0xFF1A2925),
-                  fontFamily: 'Georgia',
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        border: Border(bottom: BorderSide(color: AppColors.line)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        child: Center(
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 1160),
+            child: Wrap(
+              spacing: 40,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const ShayekLogo(),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _SiteNavLink(
+                      label: 'Home',
+                      selected: selectedIndex == 0,
+                      onPressed: () => onDestinationSelected(0),
+                    ),
+                    const SizedBox(width: 12),
+                    _SiteNavLink(
+                      label: 'Lists',
+                      selected: selectedIndex == 1,
+                      onPressed: () => onDestinationSelected(1),
+                    ),
+                  ],
                 ),
-              );
-
-              if (constraints.maxWidth < 520) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [brand, const SizedBox(height: 12), navigation],
-                );
-              }
-
-              return Row(children: [brand, const Spacer(), navigation]);
-            },
+              ],
+            ),
           ),
         ),
       ),
@@ -150,128 +144,99 @@ class SharedSiteHeader extends StatelessWidget {
   }
 }
 
-class _SiteNavButton extends StatelessWidget {
-  const _SiteNavButton({
+/// Suitcase mark + wordmark.
+class ShayekLogo extends StatelessWidget {
+  const ShayekLogo({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CustomPaint(size: Size.square(30), painter: _SuitcasePainter()),
+        SizedBox(width: 10),
+        Text('Shayek', style: AppText.brand),
+      ],
+    );
+  }
+}
+
+class _SuitcasePainter extends CustomPainter {
+  const _SuitcasePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 32;
+    final body = RRect.fromRectAndRadius(
+      Rect.fromLTWH(6 * s, 10 * s, 20 * s, 17 * s),
+      Radius.circular(4 * s),
+    );
+    canvas.drawRRect(body, Paint()..color = AppColors.accent);
+
+    final stroke = Paint()
+      ..color = AppColors.ink
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2 * s
+      ..strokeCap = StrokeCap.round;
+    canvas
+      ..drawPath(
+        Path()
+          ..moveTo(12 * s, 10 * s)
+          ..lineTo(12 * s, 7 * s)
+          ..arcToPoint(Offset(14 * s, 5 * s), radius: Radius.circular(2 * s))
+          ..lineTo(18 * s, 5 * s)
+          ..arcToPoint(Offset(20 * s, 7 * s), radius: Radius.circular(2 * s))
+          ..lineTo(20 * s, 10 * s),
+        stroke,
+      )
+      ..drawLine(Offset(11 * s, 15 * s), Offset(11 * s, 22 * s), stroke)
+      ..drawLine(Offset(21 * s, 15 * s), Offset(21 * s, 22 * s), stroke);
+  }
+
+  @override
+  bool shouldRepaint(_SuitcasePainter oldDelegate) => false;
+}
+
+class _SiteNavLink extends StatelessWidget {
+  const _SiteNavLink({
     required this.label,
-    required this.icon,
     required this.selected,
     required this.onPressed,
   });
 
   final String label;
-  final IconData icon;
   final bool selected;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return TextButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 20),
-      label: Text(label),
-      style: TextButton.styleFrom(
-        foregroundColor: const Color(0xFF456F60),
-        backgroundColor: selected
-            ? const Color(0xFFDCECE2)
-            : Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-    );
-  }
-}
-
-class SiteFooter extends StatelessWidget {
-  const SiteFooter({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF1A2925),
-        border: Border(top: BorderSide(color: Color(0xFF30463D))),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 36, 24, 20),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1280),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = Wrap(
-                spacing: 64,
-                runSpacing: 28,
-                children: const [
-                  _FooterColumn(
-                    title: 'Support',
-                    links: ['Help center', 'Contact us', 'Feedback'],
-                  ),
-                  _FooterColumn(
-                    title: 'Explore',
-                    links: ['Your trips', 'Packing lists', 'Travel tips'],
-                  ),
-                  _FooterColumn(
-                    title: 'Company',
-                    links: ['About Shayek', 'Privacy', 'Terms'],
-                  ),
-                ],
-              );
-
-              final introduction = Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Shayek',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: 'Georgia',
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  SizedBox(
-                    width: 260,
-                    child: Text(
-                      'Pack with confidence. Travel with less to think about.',
-                      style: TextStyle(color: Color(0xFFB7C8BE), height: 1.5),
-                    ),
-                  ),
-                ],
-              );
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (constraints.maxWidth >= 760)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [introduction, const Spacer(), columns],
-                    )
-                  else ...[
-                    introduction,
-                    const SizedBox(height: 28),
-                    columns,
-                  ],
-                  const SizedBox(height: 32),
-                  const Divider(color: Color(0xFF30463D), height: 1),
-                  const SizedBox(height: 16),
-                  const Wrap(
-                    spacing: 12,
-                    runSpacing: 8,
-                    children: [
-                      Text(
-                        '© 2026 Shayek',
-                        style: TextStyle(color: Color(0xFFB7C8BE)),
-                      ),
-                      Text(
-                        'Private by default · Built for better journeys',
-                        style: TextStyle(color: Color(0xFFB7C8BE)),
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            },
+    return Semantics(
+      selected: selected,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: selected ? AppColors.accent : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: selected ? AppColors.ink : AppColors.muted,
+                  fontSize: 16,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -279,37 +244,60 @@ class SiteFooter extends StatelessWidget {
   }
 }
 
-class _FooterColumn extends StatelessWidget {
-  const _FooterColumn({required this.title, required this.links});
+/// Quiet footer on the same paper background, separated by a hairline.
+class SiteFooter extends StatelessWidget {
+  const SiteFooter({super.key});
 
-  final String title;
-  final List<String> links;
+  static const _links = [
+    'Help center',
+    'Contact us',
+    'Feedback',
+    'About Shayek',
+    'Privacy',
+    'Terms',
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 128,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        border: Border(top: BorderSide(color: AppColors.line)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        child: Center(
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 1160),
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 24,
+              runSpacing: 8,
+              children: [
+                const Text(
+                  '© 2026 Shayek · Pack with confidence.',
+                  style: TextStyle(color: AppColors.muted, fontSize: 13),
+                ),
+                Wrap(
+                  spacing: 20,
+                  runSpacing: 6,
+                  children: [
+                    for (final link in _links)
+                      Text(
+                        link,
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 13,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          ...links.map(
-            (link) => Padding(
-              padding: const EdgeInsets.only(bottom: 9),
-              child: Text(
-                link,
-                style: const TextStyle(color: Color(0xFFB7C8BE), fontSize: 13),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

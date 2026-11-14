@@ -7,6 +7,7 @@ import '../models/packing_template.dart';
 import '../models/trip.dart';
 import '../providers/checklist_provider.dart';
 import '../providers/template_provider.dart';
+import '../theme/app_theme.dart';
 import '../widgets/shared_bottom_navigation_bar.dart';
 
 /// Checklist generation and management screen for a trip.
@@ -21,8 +22,7 @@ class ChecklistScreen extends StatefulWidget {
 }
 
 class _ChecklistScreenState extends State<ChecklistScreen> {
-  static const _green = Color(0xFF185C45);
-  static const _muted = Color(0xFF607168);
+  static const _muted = AppColors.muted;
 
   late Trip _trip;
   String _query = '';
@@ -64,7 +64,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F5),
+      backgroundColor: AppColors.background,
       body: Consumer<ChecklistProvider>(
         builder: (context, checklist, _) {
           final visibleItems = _visibleItems(checklist.items);
@@ -79,93 +79,37 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                   );
                 },
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-                child: Column(
-                  children: [
-                    Row(
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 920),
+                  child: Padding(
+                    // Bottom padding keeps the last rows clear of the
+                    // floating "Add item" button.
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        IconButton(
-                          onPressed: () {
-                            if (Navigator.of(context).canPop()) {
-                              Navigator.of(context).pop();
-                            } else {
-                              Navigator.of(context)
-                                  .pushReplacementNamed(AppRoutes.home);
-                            }
-                          },
-                          tooltip: 'Go back',
-                          icon: const Icon(Icons.arrow_back),
-                        ),
-                        const Expanded(
-                          child: Text(
-                            'Packing checklist',
-                            style: TextStyle(
-                              fontFamily: 'Georgia',
-                              fontSize: 28,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        PopupMenuButton<String>(
-                          tooltip: 'Checklist actions',
-                          onSelected: (action) {
-                            if (action == 'generate') _showGenerateDialog();
-                            if (action == 'clear') _confirmRemovePacked();
-                            if (action == 'save-template') _saveAsTemplate();
-                          },
-                          itemBuilder: (_) => const [
-                            PopupMenuItem(
-                              value: 'generate',
-                              child: Text('Regenerate checklist'),
-                            ),
-                            PopupMenuItem(
-                              value: 'clear',
-                              child: Text('Remove packed items'),
-                            ),
-                            PopupMenuItem(
-                              value: 'save-template',
-                              child: Text('Save as list'),
-                            ),
-                          ],
-                        ),
+                        _topBar(),
+                        const SizedBox(height: 18),
+                        _tripHeader(),
+                        const SizedBox(height: 28),
+                        _progressCard(checklist),
+                        const SizedBox(height: 36),
+                        _sectionTitle(checklist.items.length),
+                        const SizedBox(height: 14),
+                        _searchField(),
+                        const SizedBox(height: 14),
+                        _statusChips(checklist),
+                        const SizedBox(height: 10),
+                        _categoryChips(checklist.items),
+                        const SizedBox(height: 18),
+                        if (visibleItems.isEmpty)
+                          _emptyResults()
+                        else
+                          _itemList(visibleItems, checklist),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    _tripHeader(),
-                    const SizedBox(height: 18),
-                    _progressCard(checklist),
-                    const SizedBox(height: 22),
-                    _sectionTitle(checklist.items.length),
-                    const SizedBox(height: 12),
-                    _searchField(),
-                    const SizedBox(height: 14),
-                    _statusChips(checklist),
-                    const SizedBox(height: 12),
-                    _categoryChips(checklist.items),
-                    const SizedBox(height: 12),
-                    if (visibleItems.isEmpty)
-                      _emptyResults()
-                    else
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: visibleItems.length,
-                            gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
-                                  maxCrossAxisExtent: 280,
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                  childAspectRatio: 1.55,
-                                ),
-                            itemBuilder: (context, index) =>
-                                _itemCard(visibleItems[index], checklist),
-                          );
-                        },
-                      ),
-                  ],
+                  ),
                 ),
               ),
               const SiteFooter(),
@@ -177,12 +121,57 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         padding: const EdgeInsets.only(right: 12, bottom: 12),
         child: FloatingActionButton.extended(
           onPressed: () => _showItemEditor(),
-          backgroundColor: _green,
-          foregroundColor: Colors.white,
           icon: const Icon(Icons.add),
           label: const Text('Add item'),
         ),
       ),
+    );
+  }
+
+  Widget _topBar() {
+    return Row(
+      children: [
+        _CircleIconButton(
+          tooltip: 'Go back',
+          icon: Icons.arrow_back,
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+            }
+          },
+        ),
+        const SizedBox(width: 14),
+        const Expanded(
+          child: Text(
+            'Packing checklist',
+            style: TextStyle(
+              color: AppColors.muted,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        PopupMenuButton<String>(
+          tooltip: 'Checklist actions',
+          position: PopupMenuPosition.under,
+          onSelected: (action) {
+            if (action == 'generate') _showGenerateDialog();
+            if (action == 'clear') _confirmRemovePacked();
+            if (action == 'save-template') _saveAsTemplate();
+          },
+          itemBuilder: (_) => const [
+            PopupMenuItem(
+              value: 'generate',
+              child: Text('Regenerate checklist'),
+            ),
+            PopupMenuItem(value: 'clear', child: Text('Remove packed items')),
+            PopupMenuItem(value: 'save-template', child: Text('Save as list')),
+          ],
+          child: const _CircleIcon(icon: Icons.more_horiz),
+        ),
+      ],
     );
   }
 
@@ -237,125 +226,81 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   Widget _tripHeader() {
     final date = _trip.departureDate;
     final dateLabel = '${_month(date.month)} ${date.day}';
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _green,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .16),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.luggage_outlined,
-              color: Colors.white,
-              size: 28,
-            ),
+    final colors = TripTypeColors.of(_trip.type);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_trip.type.label, style: AppText.eyebrow(colors.onTint)),
+              const SizedBox(height: 8),
+              Text(
+                _trip.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.display,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '${_trip.durationDays} days  ·  ${_trip.travelerCount} ${_trip.travelerCount == 1 ? 'traveler' : 'travelers'}  ·  Departing $dateLabel',
+                style: AppText.lead.copyWith(fontSize: 16),
+              ),
+            ],
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _trip.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 19,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  '${_trip.type.label}  ·  ${_trip.durationDays} days  ·  ${_trip.travelerCount} ${_trip.travelerCount == 1 ? 'traveler' : 'travelers'}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'Departing $dateLabel',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: _showGenerateDialog,
-            tooltip: 'Trip packing settings',
-            color: Colors.white,
-            icon: const Icon(Icons.tune),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 16),
+        _CircleIconButton(
+          tooltip: 'Trip packing settings',
+          icon: Icons.tune,
+          onPressed: _showGenerateDialog,
+        ),
+      ],
     );
   }
 
   Widget _progressCard(ChecklistProvider checklist) {
     final percent = (checklist.progress * 100).round();
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE7EAE5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Packing progress',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                ),
-              ),
-              Text(
-                '$percent%',
-                style: const TextStyle(
-                  color: _green,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: checklist.progress,
-              minHeight: 9,
-              backgroundColor: const Color(0xFFE8ECE7),
-              color: _green,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            const Expanded(
+              child: Text('Packing progress', style: AppText.label),
             ),
+            Text(
+              '$percent%',
+              style: AppText.cardTitle.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(99),
+          child: LinearProgressIndicator(
+            value: checklist.progress,
+            minHeight: 8,
           ),
-          const SizedBox(height: 10),
-          Text(
-            '${checklist.packedCount} of ${checklist.totalCount} items packed',
-            style: const TextStyle(color: _muted, fontSize: 13),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '${checklist.packedCount} of ${checklist.totalCount} items packed',
+          style: AppText.muted,
+        ),
+      ],
     );
   }
 
   Widget _sectionTitle(int count) => Row(
+    crossAxisAlignment: CrossAxisAlignment.baseline,
+    textBaseline: TextBaseline.alphabetic,
     children: [
-      const Expanded(
-        child: Text(
-          'Your items',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-        ),
-      ),
-      Text('$count items', style: const TextStyle(color: _muted, fontSize: 13)),
+      const Expanded(child: Text('Your items', style: AppText.title)),
+      Text('$count items', style: AppText.muted),
     ],
   );
 
@@ -365,16 +310,18 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     decoration: InputDecoration(
       hintText: 'Search your checklist',
       prefixIcon: const Icon(Icons.search, color: _muted),
-      filled: true,
-      fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(vertical: 0),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(99),
+        borderSide: const BorderSide(color: AppColors.fieldBorder, width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(color: Color(0xFFE7EAE5)),
+        borderRadius: BorderRadius.circular(99),
+        borderSide: const BorderSide(color: AppColors.fieldBorder, width: 1.5),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(99),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
     ),
   );
@@ -388,30 +335,40 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       ),
       (_ChecklistFilter.packed, 'Packed (${checklist.packedCount})'),
     ];
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: tabs.map((tab) {
-          final selected = _statusFilter == tab.$1;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(tab.$2),
-              selected: selected,
-              onSelected: (_) => setState(() => _statusFilter = tab.$1),
-              selectedColor: const Color(0xFFE0ECE5),
-              labelStyle: TextStyle(
-                color: selected ? _green : _muted,
-                fontWeight: FontWeight.w600,
-              ),
-              side: BorderSide(
-                color: selected
-                    ? const Color(0xFFB7CCBF)
-                    : const Color(0xFFE7EAE5),
-              ),
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: const Color(0xFFEDE6DA),
+            borderRadius: BorderRadius.circular(99),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Row(
+              children: tabs.map((tab) {
+                final selected = _statusFilter == tab.$1;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 2),
+                  child: ChoiceChip(
+                    label: Text(tab.$2),
+                    selected: selected,
+                    showCheckmark: false,
+                    onSelected: (_) => setState(() => _statusFilter = tab.$1),
+                    backgroundColor: Colors.transparent,
+                    selectedColor: AppColors.surface,
+                    side: BorderSide.none,
+                    labelStyle: TextStyle(
+                      color: selected ? AppColors.ink : _muted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
-          );
-        }).toList(),
+          ),
+        ),
       ),
     );
   }
@@ -423,25 +380,26 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         (category) => items.any((item) => item.category == category),
       ),
     ];
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: categories.map((category) {
-          final selected = _categoryFilter == category;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              label: Text(category),
-              selected: selected,
-              onSelected: (_) => setState(() => _categoryFilter = category),
-              backgroundColor: Colors.white,
-              selectedColor: const Color(0xFFE0ECE5),
-              checkmarkColor: _green,
-              side: const BorderSide(color: Color(0xFFE7EAE5)),
-            ),
-          );
-        }).toList(),
-      ),
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: categories.map((category) {
+        final selected = _categoryFilter == category;
+        return FilterChip(
+          label: Text(category),
+          selected: selected,
+          showCheckmark: false,
+          onSelected: (_) => setState(() => _categoryFilter = category),
+          labelStyle: TextStyle(
+            color: selected ? Colors.white : AppColors.ink,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+          ),
+          side: BorderSide(
+            color: selected ? AppColors.ink : AppColors.fieldBorder,
+            width: 1.5,
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -458,110 +416,126 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         return matchesQuery && matchesCategory && matchesStatus;
       }).toList();
 
-  Widget _itemCard(PackingItem item, ChecklistProvider checklist) {
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFE7EAE5)),
+  /// All visible items on one sheet, like a written packing list.
+  Widget _itemList(List<PackingItem> items, ChecklistProvider checklist) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line),
       ),
+      child: Column(
+        children: [
+          for (final (index, item) in items.indexed) ...[
+            if (index > 0)
+              const Divider(
+                height: 1,
+                indent: 20,
+                endIndent: 20,
+                color: AppColors.divider,
+              ),
+            _itemRow(item, checklist),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _itemRow(PackingItem item, ChecklistProvider checklist) {
+    return InkWell(
+      onTap: () => checklist.togglePacked(item.id),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
-        child: Column(
+        padding: const EdgeInsets.fromLTRB(12, 8, 10, 8),
+        child: Row(
           children: [
-            Row(
-              children: [
-                Checkbox(
-                  value: item.isPacked,
-                  activeColor: _green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  visualDensity: VisualDensity.compact,
-                  onChanged: (_) => checklist.togglePacked(item.id),
-                ),
-                Expanded(
-                  child: InkWell(
-                    onTap: () => checklist.togglePacked(item.id),
-                    child: Text(
-                      item.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        decoration: item.isPacked
-                            ? TextDecoration.lineThrough
-                            : null,
-                        color: item.isPacked ? _muted : const Color(0xFF252A27),
-                      ),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => _showItemEditor(item),
-                  tooltip: 'Edit item',
-                  icon: const Icon(Icons.edit_outlined),
-                  color: _muted,
-                  visualDensity: VisualDensity.compact,
-                ),
-                IconButton(
-                  onPressed: () => _confirmDelete(item),
-                  tooltip: 'Delete item',
-                  icon: const Icon(Icons.delete_outline),
-                  color: const Color(0xFFB44A4A),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
+            Checkbox(
+              value: item.isPacked,
+              onChanged: (_) => checklist.togglePacked(item.id),
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _categoryIcon(item.category, size: 14),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            item.category,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: _muted,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
+            const SizedBox(width: 6),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      decoration: item.isPacked
+                          ? TextDecoration.lineThrough
+                          : null,
+                      color: item.isPacked ? _muted : AppColors.ink,
                     ),
-                    if (item.quantity > 1)
-                      Text(
-                        'Qty ${item.quantity}',
-                        style: const TextStyle(color: _muted, fontSize: 12),
-                      ),
-                    if (item.isShared)
-                      const Row(
+                  ),
+                  const SizedBox(height: 3),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 2,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.people_outline, size: 14, color: _muted),
-                          SizedBox(width: 3),
-                          Text(
-                            'Shared',
-                            style: TextStyle(color: _muted, fontSize: 12),
+                          _categoryIcon(item.category, size: 14),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              item.category,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: _muted,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                  ],
-                ),
+                      if (item.quantity > 1)
+                        Text(
+                          'Qty ${item.quantity}',
+                          style: const TextStyle(color: _muted, fontSize: 13),
+                        ),
+                      if (item.isShared)
+                        const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.people_outline,
+                              size: 14,
+                              color: AppColors.shared,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Shared',
+                              style: TextStyle(
+                                color: AppColors.shared,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ],
               ),
+            ),
+            IconButton(
+              onPressed: () => _showItemEditor(item),
+              tooltip: 'Edit item',
+              icon: const Icon(Icons.edit_outlined, size: 20),
+              color: _muted,
+            ),
+            IconButton(
+              onPressed: () => _confirmDelete(item),
+              tooltip: 'Delete item',
+              icon: const Icon(Icons.delete_outline, size: 20),
+              color: AppColors.error,
             ),
           ],
         ),
@@ -570,27 +544,26 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   }
 
   Widget _emptyResults() => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 34),
+    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
     decoration: BoxDecoration(
-      color: Colors.white,
       borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: const Color(0xFFE7EAE5)),
+      border: Border.all(color: AppColors.fieldBorder, width: 1.5),
     ),
     child: Column(
       children: [
-        const Icon(Icons.checklist_outlined, size: 38, color: _muted),
-        const SizedBox(height: 10),
+        const Icon(Icons.checklist_outlined, size: 36, color: AppColors.accent),
+        const SizedBox(height: 12),
         Text(
           _query.isNotEmpty ? 'No matching items' : 'Nothing here yet',
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          style: AppText.cardTitle,
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 6),
         Text(
           _query.isNotEmpty
               ? 'Try another search or filter.'
               : 'Add an item or generate a fresh checklist.',
           textAlign: TextAlign.center,
-          style: const TextStyle(color: _muted, fontSize: 13),
+          style: AppText.muted.copyWith(fontSize: 15),
         ),
       ],
     ),
@@ -890,6 +863,59 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 }
 
 enum _ChecklistFilter { all, toPack, packed }
+
+/// Round outlined icon used for the back button and header actions.
+class _CircleIcon extends StatelessWidget {
+  const _CircleIcon({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.fieldBorder, width: 1.5),
+      ),
+      child: Icon(icon, color: AppColors.ink, size: 20),
+    );
+  }
+}
+
+class _CircleIconButton extends StatelessWidget {
+  const _CircleIconButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        type: MaterialType.transparency,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: Semantics(
+            button: true,
+            label: tooltip,
+            child: _CircleIcon(icon: icon),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 extension on TripType {
   String get label => switch (this) {

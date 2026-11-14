@@ -8,6 +8,7 @@ import 'app_routes.dart';
 import 'providers/checklist_provider.dart';
 import 'providers/template_provider.dart';
 import 'providers/trip_provider.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   if (kIsWeb) {
@@ -31,23 +32,7 @@ class ShayekApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Shayek',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF185C45)),
-          snackBarTheme: SnackBarThemeData(
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: const Color(0xFF1A2925),
-            contentTextStyle: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(16)),
-            ),
-            insetPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          ),
-        ),
+        theme: AppTheme.build(),
         initialRoute: AppRoutes.home,
         onGenerateRoute: AppRoutes.generateRoute,
       ),
