@@ -30,10 +30,10 @@ The priority features are Trip Creation, Generated Packing Checklist, Checklist 
 
 ## Implemented in this skeleton
 
-- Material 3 application theme and a clean Flutter project structure.
+- Material 3 application theme (see **UI design** below) and a clean Flutter project structure.
 - Named routes for all six planned screens.
-- Home/Templates bottom-navigation shell with selected-tab behavior.
-- A Home placeholder containing only a Create Trip link; the final Home UI is intentionally not implemented.
+- Home/Lists navigation shell with a shared top bar and footer.
+- Home page listing upcoming trips as boarding-pass cards, with empty, loading, and error states.
 - Empty route placeholder files for Create Trip, Checklist, Templates, Family Members, and Return Checklist.
 - Reachable placeholder screens for checklist, templates, family members, and return checklist.
 - Null-safe base models for `Trip`, `PackingItem`, `PackingTemplate`, and `TemplateItem`.
@@ -46,8 +46,25 @@ The priority features are Trip Creation, Generated Packing Checklist, Checklist 
 - Checklist generation, checklist CRUD, categorization, packed-state updates, and progress tracking are not implemented yet.
 - Saving, editing, deleting, and applying templates are not implemented yet.
 - Trip creation fields and validation are not implemented yet; the Create Trip page only links to the checklist route.
-- The final Home page design is intentionally deferred for review.
 - Family Members and Return Checklist are basic navigable placeholders planned for **Phase 4**. Return reminders and notifications are also deferred; no notification package is included.
+
+## UI design
+
+The app uses one shared visual style, defined in `lib/theme/app_theme.dart`:
+
+- **`AppColors`**: warm paper background, deep-blue actions, a tangerine accent, and ink/muted text colours.
+- **`TripTypeColors`**: a soft tint and a readable text colour for each trip type (beach, business, family, camping, city, other), used on Home cards, the checklist header, and list cards.
+- **`AppText`**: serif headings (Georgia) over a clean sans-serif body.
+- **`AppTheme.build()`**: the `ThemeData` passed to `MaterialApp`; it styles buttons (pill-shaped), text fields, chips, checkboxes, dialogs, menus, snackbars, and progress bars, so screens pick up the look without repeating colours.
+
+Screen highlights:
+
+- **Home**: trips shown as boarding-pass cards with the departure date on a stub tinted by trip type.
+- **Create Trip**: trip types as pill buttons, round +/− counters, and a full-width Generate button.
+- **Checklist**: the trip name as a large heading, a slim progress bar, and items as rows on one sheet with round checkboxes.
+- **Lists**: saved and public lists in a card grid showing the list name, trip type, sample items, and visibility.
+
+New screens should use `AppColors`, `AppText`, and the theme's widget styles instead of hard-coded colours.
 
 ## Technology and packages
 

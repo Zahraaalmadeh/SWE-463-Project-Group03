@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_routes.dart';
+import '../theme/app_theme.dart';
 import '../widgets/shared_bottom_navigation_bar.dart';
 import 'home_screen.dart';
 import 'templates_screen.dart';
@@ -29,7 +30,7 @@ class _NavigationShellState extends State<NavigationShell> {
     const screens = [HomeScreen(), TemplatesScreen()];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAF6),
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           SharedSiteHeader(
