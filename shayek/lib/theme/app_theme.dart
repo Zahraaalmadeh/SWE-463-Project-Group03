@@ -55,51 +55,58 @@ class TripTypeColors {
   };
 }
 
-/// Serif display type for headings over a clean sans body.
+/// Fraunces (serif) for headings over DM Sans for body text. Both are
+/// bundled in assets/fonts and registered in pubspec.yaml.
 abstract final class AppText {
-  static const _serif = 'Georgia';
-  static const _serifFallback = ['serif'];
+  static const serif = 'Fraunces';
+  static const sans = 'DM Sans';
+  static const _serifFallback = ['Georgia', 'serif'];
 
+  /// Page heading, e.g. "Your trips".
   static const display = TextStyle(
     color: AppColors.ink,
-    fontFamily: _serif,
+    fontFamily: serif,
     fontFamilyFallback: _serifFallback,
-    fontSize: 44,
+    fontSize: 52,
     fontWeight: FontWeight.w500,
-    height: 1.1,
-    letterSpacing: -0.6,
+    height: 1.05,
+    letterSpacing: -1.04,
   );
 
+  /// Section heading, e.g. "Search packing lists".
   static const title = TextStyle(
     color: AppColors.ink,
-    fontFamily: _serif,
+    fontFamily: serif,
     fontFamilyFallback: _serifFallback,
-    fontSize: 26,
+    fontSize: 34,
     fontWeight: FontWeight.w500,
-    height: 1.2,
+    height: 1.15,
+    letterSpacing: -0.34,
   );
 
+  /// Card heading, e.g. a list name.
   static const cardTitle = TextStyle(
     color: AppColors.ink,
-    fontFamily: _serif,
+    fontFamily: serif,
     fontFamilyFallback: _serifFallback,
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: FontWeight.w500,
     height: 1.2,
   );
 
   static const brand = TextStyle(
     color: AppColors.ink,
-    fontFamily: _serif,
+    fontFamily: serif,
     fontFamilyFallback: _serifFallback,
-    fontSize: 25,
-    fontWeight: FontWeight.w700,
+    fontSize: 26,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.26,
   );
 
   static const lead = TextStyle(
     color: AppColors.muted,
-    fontSize: 17,
-    height: 1.5,
+    fontSize: 18,
+    height: 1.55,
   );
 
   static const body = TextStyle(color: AppColors.ink, fontSize: 15);
@@ -110,13 +117,71 @@ abstract final class AppText {
     fontWeight: FontWeight.w600,
   );
 
-  /// Small bold label above a card title (e.g. the trip type).
+  /// Small uppercase label above a card title (e.g. "FAMILY TRIP").
   static TextStyle eyebrow(Color color) => TextStyle(
     color: color,
     fontSize: 13,
     fontWeight: FontWeight.w700,
-    letterSpacing: 0.8,
+    letterSpacing: 1.04,
   );
+}
+
+/// A heading where one word sits on a yellow highlighter stroke covering the
+/// lower part of the letters, e.g. "Your **trips**".
+class HighlightedHeading extends StatelessWidget {
+  const HighlightedHeading({
+    super.key,
+    required this.before,
+    required this.highlighted,
+    this.style = AppText.display,
+  });
+
+  final String before;
+  final String highlighted;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final textScaler = MediaQuery.textScalerOf(context);
+    TextPainter measure(String text) => TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: textScaler,
+      maxLines: 1,
+    )..layout();
+
+    // Measure where the highlighted word sits on the line, then draw the
+    // marker stroke behind it, from 62% to 92% of the line height.
+    final full = measure(before + highlighted);
+    final lead = measure(before);
+    final lineHeight = full.height;
+    const pad = 4.0;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          left: lead.width - pad,
+          width: full.width - lead.width + pad * 2,
+          top: lineHeight * 0.62,
+          height: lineHeight * 0.30,
+          child: const ColoredBox(color: AppColors.highlight),
+        ),
+        Text(before + highlighted, style: style),
+      ],
+    );
+  }
+}
+
+/// Page widths and gutters shared by every screen.
+abstract final class AppLayout {
+  /// Outer width of the top bar and wide pages, including [pagePadding].
+  static const pageWidth = 1160.0;
+  static const pagePadding = 40.0;
+
+  /// Side gutter for the current window: 40px, or 20px on phones.
+  static double gutter(BuildContext context) =>
+      MediaQuery.sizeOf(context).width < 600 ? 20 : pagePadding;
 }
 
 abstract final class AppTheme {
@@ -147,6 +212,7 @@ abstract final class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: AppText.sans,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
       dividerColor: AppColors.line,
@@ -160,8 +226,7 @@ abstract final class AppTheme {
         centerTitle: false,
         titleTextStyle: TextStyle(
           color: AppColors.ink,
-          fontFamily: 'Georgia',
-          fontFamilyFallback: ['serif'],
+          fontFamily: AppText.serif,
           fontSize: 22,
           fontWeight: FontWeight.w600,
         ),
@@ -200,6 +265,7 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
+        hoverColor: Colors.transparent,
         hintStyle: const TextStyle(color: AppColors.muted),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 18,
@@ -268,8 +334,7 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         titleTextStyle: const TextStyle(
           color: AppColors.ink,
-          fontFamily: 'Georgia',
-          fontFamilyFallback: ['serif'],
+          fontFamily: AppText.serif,
           fontSize: 22,
           fontWeight: FontWeight.w600,
         ),

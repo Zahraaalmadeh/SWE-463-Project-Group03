@@ -28,6 +28,7 @@ class _NavigationShellState extends State<NavigationShell> {
   @override
   Widget build(BuildContext context) {
     const screens = [HomeScreen(), TemplatesScreen()];
+    final isHome = _selectedIndex == 0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -41,9 +42,18 @@ class _NavigationShellState extends State<NavigationShell> {
                 index == 0 ? AppRoutes.home : AppRoutes.templates,
               );
             },
+            action: isHome
+                ? HeaderActionButton(
+                    label: 'New trip',
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.createTrip),
+                  )
+                : HeaderActionButton(
+                    label: 'Create list',
+                    onPressed: () => showCreateListDialog(context),
+                  ),
           ),
           Expanded(child: screens[_selectedIndex]),
-          const SiteFooter(),
         ],
       ),
     );

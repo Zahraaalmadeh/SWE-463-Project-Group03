@@ -7,7 +7,24 @@ import '../models/trip.dart';
 import '../providers/template_provider.dart';
 import '../providers/trip_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/text_prompt_dialog.dart';
 import 'template_editor_screen.dart';
+
+/// Opens the "Create a packing list" editor as a dialog. Used by the Lists
+/// empty state and by the "Create list" button in the top bar.
+Future<void> showCreateListDialog(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    builder: (_) => const Dialog(
+      insetPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(22)),
+      ),
+      child: SizedBox(width: 720, child: TemplateEditorScreen(isModal: true)),
+    ),
+  );
+}
 
 class TemplatesScreen extends StatefulWidget {
   const TemplatesScreen({super.key});
@@ -40,179 +57,159 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _background,
-      appBar: AppBar(
-        toolbarHeight: 0,
-        title: const Text('Lists'),
-        backgroundColor: _background,
-        automaticallyImplyLeading: false,
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1160),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 44, 24, 0),
-              child: Consumer<TemplateProvider>(
-                builder: (context, provider, _) {
-                  final templates = provider.templates;
-                  final ownLists = templates
-                      .where((template) => !template.id.startsWith('sample-'))
-                      .toList();
-                  final publicLists = provider.publicLists.where((template) {
-                    final query = _searchQuery.trim().toLowerCase();
-                    return query.isEmpty ||
-                        template.name.toLowerCase().contains(query) ||
-                        template.type.name.contains(query) ||
-                        template.items.any(
-                          (item) => item.name.toLowerCase().contains(query),
-                        );
-                  }).toList();
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.end,
-                        spacing: 24,
-                        runSpacing: 16,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${templates.length} saved',
-                                style: AppText.lead,
-                              ),
-                              const SizedBox(height: 6),
-                              const Text('Your Lists', style: AppText.display),
-                            ],
-                          ),
-                          FilledButton.icon(
-                            onPressed: _createTemplate,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Create List'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      Expanded(
-                        child: provider.isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : provider.errorMessage != null
-                            ? _ErrorState(message: provider.errorMessage!)
-                            : ListView(
-                                padding: const EdgeInsets.only(bottom: 40),
+    return ColoredBox(
+      color: _background,
+      child: Consumer<TemplateProvider>(
+        builder: (context, provider, _) {
+          final ownLists = provider.templates
+              .where((template) => !template.id.startsWith('sample-'))
+              .toList();
+          final publicLists = provider.publicLists.where((template) {
+            final query = _searchQuery.trim().toLowerCase();
+            return query.isEmpty ||
+                template.name.toLowerCase().contains(query) ||
+                template.type.name.contains(query) ||
+                template.items.any(
+                  (item) => item.name.toLowerCase().contains(query),
+                );
+          }).toList();
+
+          return ListView(
+            children: [
+              Center(
+                child: Container(
+                  width: double.infinity,
+                  constraints: const BoxConstraints(
+                    maxWidth: AppLayout.pageWidth,
+                  ),
+                  padding: EdgeInsets.fromLTRB(
+                    AppLayout.gutter(context),
+                    56,
+                    AppLayout.gutter(context),
+                    80,
+                  ),
+                  child: provider.isLoading
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 80),
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      : provider.errorMessage != null
+                      ? _ErrorState(message: provider.errorMessage!)
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const HighlightedHeading(
+                              before: 'Your packing ',
+                              highlighted: 'lists',
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Lists you’ve saved, ready to reuse on your next trip.',
+                              style: AppText.lead,
+                            ),
+                            const SizedBox(height: 28),
+                            if (ownLists.isEmpty)
+                              _EmptyState(
+                                onCreateTemplate: _createTemplate,
+                                onStartTrip: _startTrip,
+                              )
+                            else
+                              _CardGrid(
                                 children: [
-                                  if (ownLists.isEmpty)
-                                    _EmptyState(
-                                      onCreateTemplate: _createTemplate,
-                                      onStartTrip: _startTrip,
-                                    )
-                                  else ...[
-                                    const Text(
-                                      'Your Packing Lists',
-                                      style: AppText.title,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    _CardGrid(
-                                      children: [
-                                        for (final template in ownLists)
-                                          _TemplateCard(
-                                            template: template,
-                                            onUse: () => _attachList(template),
-                                            onRename: () =>
-                                                _renameTemplate(template),
-                                            onDelete: () =>
-                                                _deleteTemplate(template),
-                                            onVisibilityChanged: (visibility) =>
-                                                _changeVisibility(
-                                                  template,
-                                                  visibility,
-                                                ),
+                                  for (final template in ownLists)
+                                    _TemplateCard(
+                                      template: template,
+                                      onUse: () => _attachList(template),
+                                      onRename: () => _renameTemplate(template),
+                                      onDelete: () => _deleteTemplate(template),
+                                      onVisibilityChanged: (visibility) =>
+                                          _changeVisibility(
+                                            template,
+                                            visibility,
                                           ),
-                                      ],
-                                    ),
-                                  ],
-                                  const SizedBox(height: 44),
-                                  const Divider(color: AppColors.line),
-                                  const SizedBox(height: 36),
-                                  Wrap(
-                                    alignment: WrapAlignment.spaceBetween,
-                                    crossAxisAlignment:
-                                        WrapCrossAlignment.center,
-                                    spacing: 24,
-                                    runSpacing: 16,
-                                    children: [
-                                      const Text(
-                                        'Search Packing Lists',
-                                        style: AppText.title,
-                                      ),
-                                      ConstrainedBox(
-                                        constraints: const BoxConstraints(
-                                          maxWidth: 420,
-                                        ),
-                                        child: TextField(
-                                          controller: _searchController,
-                                          decoration: InputDecoration(
-                                            prefixIcon: const Icon(
-                                              Icons.search,
-                                              color: _muted,
-                                            ),
-                                            hintText:
-                                                'Search by name, type, or item',
-                                            border: _pillBorder(
-                                              AppColors.fieldBorder,
-                                            ),
-                                            enabledBorder: _pillBorder(
-                                              AppColors.fieldBorder,
-                                            ),
-                                            focusedBorder: _pillBorder(
-                                              AppColors.primary,
-                                              2,
-                                            ),
-                                          ),
-                                          onChanged: (value) => setState(
-                                            () => _searchQuery = value,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 20),
-                                  if (publicLists.isEmpty)
-                                    const Text(
-                                      'No public lists match your search.',
-                                      style: TextStyle(
-                                        color: _muted,
-                                        fontSize: 15,
-                                      ),
-                                    )
-                                  else
-                                    _CardGrid(
-                                      children: [
-                                        for (final template in publicLists)
-                                          _TemplateCard(
-                                            template: template,
-                                            onUse: () => _attachList(template),
-                                            onRename: () {},
-                                            onDelete: () {},
-                                            onVisibilityChanged: (_) {},
-                                          ),
-                                      ],
                                     ),
                                 ],
                               ),
-                      ),
-                    ],
-                  );
-                },
+                            const SizedBox(height: 56),
+                            const Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: AppColors.line,
+                            ),
+                            const SizedBox(height: 48),
+                            _searchHeader(),
+                            const SizedBox(height: 20),
+                            if (publicLists.isEmpty)
+                              const Text(
+                                'No public lists match your search.',
+                                style: TextStyle(color: _muted, fontSize: 15),
+                              )
+                            else
+                              _PublicListResults(
+                                lists: publicLists,
+                                onUse: _attachList,
+                              ),
+                          ],
+                        ),
+                ),
               ),
-            ),
-          ),
-        ),
+            ],
+          );
+        },
       ),
+    );
+  }
+
+  Widget _searchHeader() {
+    final title = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Search packing lists', style: AppText.title),
+        const SizedBox(height: 8),
+        Text(
+          'Borrow a list other travelers have made public.',
+          style: AppText.lead.copyWith(fontSize: 16),
+        ),
+      ],
+    );
+    final search = SizedBox(
+      height: 52,
+      child: TextField(
+        controller: _searchController,
+        style: const TextStyle(color: AppColors.ink, fontSize: 16),
+        decoration: InputDecoration(
+          hintText: 'Search by name, type, or item',
+          hintStyle: const TextStyle(color: _muted, fontSize: 16),
+          prefixIcon: const Padding(
+            padding: EdgeInsets.only(left: 20, right: 10),
+            child: Icon(Icons.search, color: _muted, size: 18),
+          ),
+          prefixIconConstraints: const BoxConstraints(),
+          contentPadding: const EdgeInsets.only(right: 20),
+          border: _pillBorder(AppColors.fieldBorder),
+          enabledBorder: _pillBorder(AppColors.fieldBorder),
+          focusedBorder: _pillBorder(AppColors.primary, 2),
+        ),
+        onChanged: (value) => setState(() => _searchQuery = value),
+      ),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 760) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [title, const SizedBox(height: 20), search],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(child: title),
+            const SizedBox(width: 20),
+            SizedBox(width: 420, child: search),
+          ],
+        );
+      },
     );
   }
 
@@ -293,45 +290,16 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
     }
   }
 
-  Future<void> _createTemplate() async {
-    await showDialog<void>(
-      context: context,
-      builder: (_) => const Dialog(
-        insetPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(22)),
-        ),
-        child: SizedBox(width: 720, child: TemplateEditorScreen(isModal: true)),
-      ),
-    );
-  }
+  Future<void> _createTemplate() => showCreateListDialog(context);
 
   Future<void> _renameTemplate(PackingTemplate template) async {
-    final controller = TextEditingController(text: template.name);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Rename template'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(labelText: 'Template name'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, controller.text),
-            child: const Text('Rename'),
-          ),
-        ],
-      ),
+    final name = await showTextPromptDialog(
+      context,
+      title: 'Rename template',
+      label: 'Template name',
+      confirmLabel: 'Rename',
+      initialText: template.name,
     );
-    controller.dispose();
     if (!mounted || name == null || name.trim().isEmpty) return;
     try {
       await context.read<TemplateProvider>().renameTemplate(template, name);
@@ -375,7 +343,7 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
   }
 }
 
-/// Lays cards out in up to three equal columns, one column on narrow windows.
+/// Lays cards out in equal columns at least 330px wide (up to three).
 class _CardGrid extends StatelessWidget {
   const _CardGrid({required this.children});
 
@@ -387,11 +355,10 @@ class _CardGrid extends StatelessWidget {
       builder: (context, constraints) {
         const spacing = 24.0;
         final width = constraints.maxWidth;
-        final columns = width >= 1000
-            ? 3
-            : width >= 640
-            ? 2
-            : 1;
+        final columns = ((width + spacing) / (330 + spacing)).floor().clamp(
+          1,
+          3,
+        );
         final cardWidth = (width - spacing * (columns - 1)) / columns;
         return Wrap(
           spacing: spacing,
@@ -402,6 +369,53 @@ class _CardGrid extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+String _typeLabel(TripType type) =>
+    type.name[0].toUpperCase() + type.name.substring(1);
+
+/// Outlined "Use list" pill that fills dark on hover.
+class _UseListButton extends StatelessWidget {
+  const _UseListButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: ButtonStyle(
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+        ),
+        minimumSize: const WidgetStatePropertyAll(Size(0, 36)),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: const WidgetStatePropertyAll(StadiumBorder()),
+        side: const WidgetStatePropertyAll(
+          BorderSide(color: AppColors.ink, width: 1.5),
+        ),
+        textStyle: const WidgetStatePropertyAll(
+          TextStyle(
+            fontFamily: AppText.sans,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        foregroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.hovered)
+              ? Colors.white
+              : AppColors.ink,
+        ),
+        backgroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.hovered)
+              ? AppColors.ink
+              : Colors.transparent,
+        ),
+        overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+      ),
+      child: const Text('Use list'),
     );
   }
 }
@@ -423,11 +437,14 @@ class _TemplateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final itemNames = template.items.map((item) => item.name).take(6).toList();
+    final names = template.items.map((item) => item.name).toList();
+    final shown = names.take(5).join(', ');
+    final more = names.length - 5;
     final colors = TripTypeColors.of(template.type);
     final isPublic = template.visibility == ListVisibility.public;
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 12, 20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
@@ -440,113 +457,111 @@ class _TemplateCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _typeLabel(template.type),
-                        style: AppText.eyebrow(colors.onTint),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        template.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppText.cardTitle.copyWith(fontSize: 24),
-                      ),
-                    ],
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      template.type.name.toUpperCase(),
+                      style: AppText.eyebrow(colors.onTint),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      template.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.cardTitle,
+                    ),
+                  ],
                 ),
               ),
-              PopupMenuButton<String>(
-                tooltip: 'List actions',
-                icon: const Icon(Icons.more_horiz, color: AppColors.muted),
-                position: PopupMenuPosition.under,
-                onSelected: (action) {
-                  if (action == 'rename') onRename();
-                  if (action == 'delete') onDelete();
-                  if (action == 'make-public') {
-                    onVisibilityChanged(ListVisibility.public);
-                  }
-                  if (action == 'make-private') {
-                    onVisibilityChanged(ListVisibility.private);
-                  }
-                },
-                itemBuilder: (_) => [
-                  if (!template.isDiscoverable)
-                    const PopupMenuItem(
-                      value: 'make-public',
-                      child: Text('Make public'),
-                    ),
-                  if (template.isDiscoverable)
-                    const PopupMenuItem(
-                      value: 'make-private',
-                      child: Text('Make private'),
-                    ),
-                  if (!template.id.startsWith('sample-')) ...[
-                    const PopupMenuItem(value: 'rename', child: Text('Rename')),
-                    const PopupMenuItem(value: 'delete', child: Text('Delete')),
+              const SizedBox(width: 12),
+              SizedBox.square(
+                dimension: 40,
+                child: PopupMenuButton<String>(
+                  tooltip: 'List actions',
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.more_horiz, color: AppColors.muted),
+                  position: PopupMenuPosition.under,
+                  onSelected: (action) {
+                    if (action == 'rename') onRename();
+                    if (action == 'delete') onDelete();
+                    if (action == 'make-public') {
+                      onVisibilityChanged(ListVisibility.public);
+                    }
+                    if (action == 'make-private') {
+                      onVisibilityChanged(ListVisibility.private);
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    if (!template.isDiscoverable)
+                      const PopupMenuItem(
+                        value: 'make-public',
+                        child: Text('Make public'),
+                      ),
+                    if (template.isDiscoverable)
+                      const PopupMenuItem(
+                        value: 'make-private',
+                        child: Text('Make private'),
+                      ),
+                    if (!template.id.startsWith('sample-')) ...[
+                      const PopupMenuItem(
+                        value: 'rename',
+                        child: Text('Rename'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Delete'),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ],
           ),
-          if (itemNames.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
+          if (names.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text.rich(
+              TextSpan(
                 children: [
-                  for (final itemName in itemNames)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.sand,
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                      child: Text(
-                        itemName,
-                        style: const TextStyle(
-                          color: AppColors.ink,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                  TextSpan(text: shown),
+                  if (more > 0)
+                    TextSpan(
+                      text: ' + $more more',
+                      style: const TextStyle(color: AppColors.ink),
                     ),
                 ],
               ),
+              style: const TextStyle(
+                color: AppColors.muted,
+                fontSize: 15,
+                height: 1.6,
+              ),
             ),
           ],
-          const SizedBox(height: 18),
-          const Divider(height: 1, color: AppColors.divider),
-          const SizedBox(height: 14),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.only(top: 14),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: AppColors.divider)),
+            ),
             child: Row(
               children: [
                 Icon(
                   isPublic ? Icons.public : Icons.lock_outline,
-                  size: 16,
+                  size: 15,
                   color: isPublic ? AppColors.shared : AppColors.muted,
                 ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    '${template.items.length} items · ${template.visibility.name}',
-                    style: const TextStyle(
-                      color: AppColors.muted,
+                    isPublic ? 'Public' : 'Private',
+                    style: TextStyle(
+                      color: isPublic ? AppColors.shared : AppColors.muted,
                       fontSize: 14,
                     ),
                   ),
                 ),
-                OutlinedButton(onPressed: onUse, child: const Text('Use List')),
+                _UseListButton(onPressed: onUse),
               ],
             ),
           ),
@@ -554,9 +569,80 @@ class _TemplateCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  static String _typeLabel(TripType type) =>
-      type.name[0].toUpperCase() + type.name.substring(1);
+/// Public lists as rows on one sheet: name, type, size, and a few items.
+class _PublicListResults extends StatelessWidget {
+  const _PublicListResults({required this.lists, required this.onUse});
+
+  final List<PackingTemplate> lists;
+  final ValueChanged<PackingTemplate> onUse;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(
+        children: [
+          for (final (index, template) in lists.indexed)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+              decoration: BoxDecoration(
+                border: index == lists.length - 1
+                    ? null
+                    : const Border(
+                        bottom: BorderSide(color: AppColors.divider),
+                      ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          template.name,
+                          style: AppText.cardTitle.copyWith(fontSize: 20),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _summary(template),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  _UseListButton(onPressed: () => onUse(template)),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  static String _summary(PackingTemplate template) {
+    final names = template.items.map((item) => item.name).toList();
+    final count = '${names.length} item${names.length == 1 ? '' : 's'}';
+    final preview = names.take(3).join(', ');
+    final ellipsis = names.length > 3 ? '…' : '';
+    return [
+      _typeLabel(template.type),
+      count,
+      if (preview.isNotEmpty) '$preview$ellipsis',
+    ].join(' · ');
+  }
 }
 
 class _EmptyState extends StatelessWidget {
@@ -571,46 +657,33 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.fromLTRB(24, 48, 24, 40),
+    padding: const EdgeInsets.fromLTRB(24, 44, 24, 36),
     decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: AppColors.fieldBorder, width: 1.5),
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: AppColors.line),
     ),
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.checklist_rtl_outlined,
-            size: 32,
-            color: AppColors.accent,
-          ),
-        ),
-        const SizedBox(height: 22),
-        const Text(
+        Text(
           'No saved templates yet',
-          style: AppText.title,
+          style: AppText.cardTitle.copyWith(fontSize: 26),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10),
         const Text(
           'Save any packing list as a template to reuse it on your next trip in one tap.',
           textAlign: TextAlign.center,
-          style: AppText.lead,
+          style: TextStyle(color: AppColors.muted, fontSize: 16, height: 1.55),
         ),
-        const SizedBox(height: 26),
+        const SizedBox(height: 24),
         FilledButton.icon(
           onPressed: onCreateTemplate,
-          icon: const Icon(Icons.add),
+          icon: const Icon(Icons.add, size: 18),
           label: const Text('Create Template'),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         TextButton(
           onPressed: onStartTrip,
           child: const Text('Or start a trip'),
@@ -626,7 +699,10 @@ class _ErrorState extends StatelessWidget {
   final String message;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Text(message, style: const TextStyle(color: AppColors.error)),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 80),
+    child: Center(
+      child: Text(message, style: const TextStyle(color: AppColors.error)),
+    ),
   );
 }

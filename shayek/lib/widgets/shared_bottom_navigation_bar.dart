@@ -88,17 +88,20 @@ class SharedBottomNavigationBar extends StatelessWidget {
   }
 }
 
-/// Top bar shared by Home, Lists and the checklist: logo on the left, the two
-/// main destinations as underlined text links.
+/// Top bar shared by Home, Lists and the checklist: logo, the two main
+/// destinations as underlined text links, and an optional [action] button on
+/// the right (e.g. "New trip").
 class SharedSiteHeader extends StatelessWidget {
   const SharedSiteHeader({
     required this.selectedIndex,
     required this.onDestinationSelected,
+    this.action,
     super.key,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -107,37 +110,88 @@ class SharedSiteHeader extends StatelessWidget {
         color: AppColors.background,
         border: Border(bottom: BorderSide(color: AppColors.line)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        child: Center(
-          child: Container(
-            width: double.infinity,
-            constraints: const BoxConstraints(maxWidth: 1160),
-            child: Wrap(
-              spacing: 40,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                const ShayekLogo(),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _SiteNavLink(
-                      label: 'Home',
-                      selected: selectedIndex == 0,
-                      onPressed: () => onDestinationSelected(0),
-                    ),
-                    const SizedBox(width: 12),
-                    _SiteNavLink(
-                      label: 'Lists',
-                      selected: selectedIndex == 1,
-                      onPressed: () => onDestinationSelected(1),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+      child: Center(
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: AppLayout.pageWidth),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppLayout.gutter(context),
+            vertical: 18,
           ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final narrow = constraints.maxWidth < 560;
+              final brandAndNav = Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                runSpacing: 8,
+                children: [
+                  const ShayekLogo(),
+                  SizedBox(width: narrow ? 24 : 40),
+                  _SiteNavLink(
+                    label: 'Home',
+                    selected: selectedIndex == 0,
+                    onPressed: () => onDestinationSelected(0),
+                  ),
+                  const SizedBox(width: 28),
+                  _SiteNavLink(
+                    label: 'Lists',
+                    selected: selectedIndex == 1,
+                    onPressed: () => onDestinationSelected(1),
+                  ),
+                ],
+              );
+              final action = this.action;
+              if (action == null) {
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: brandAndNav,
+                );
+              }
+              // On narrow screens the action drops below the links.
+              if (narrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [brandAndNav, const SizedBox(height: 12), action],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: brandAndNav),
+                  const SizedBox(width: 16),
+                  action,
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The small pill button used in the top bar (e.g. "New trip").
+class HeaderActionButton extends StatelessWidget {
+  const HeaderActionButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.add, size: 18),
+      label: Text(label),
+      style: FilledButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        textStyle: const TextStyle(
+          fontFamily: AppText.sans,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -214,87 +268,24 @@ class _SiteNavLink extends StatelessWidget {
       selected: selected,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: selected ? AppColors.accent : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: selected ? AppColors.ink : AppColors.muted,
-                  fontSize: 16,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                ),
+        borderRadius: BorderRadius.circular(4),
+        hoverColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: selected ? AppColors.accent : Colors.transparent,
+                width: 2,
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Quiet footer on the same paper background, separated by a hairline.
-class SiteFooter extends StatelessWidget {
-  const SiteFooter({super.key});
-
-  static const _links = [
-    'Help center',
-    'Contact us',
-    'Feedback',
-    'About Shayek',
-    'Privacy',
-    'Terms',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        border: Border(top: BorderSide(color: AppColors.line)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        child: Center(
-          child: Container(
-            width: double.infinity,
-            constraints: const BoxConstraints(maxWidth: 1160),
-            child: Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 24,
-              runSpacing: 8,
-              children: [
-                const Text(
-                  '© 2026 Shayek · Pack with confidence.',
-                  style: TextStyle(color: AppColors.muted, fontSize: 13),
-                ),
-                Wrap(
-                  spacing: 20,
-                  runSpacing: 6,
-                  children: [
-                    for (final link in _links)
-                      Text(
-                        link,
-                        style: const TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 13,
-                        ),
-                      ),
-                  ],
-                ),
-              ],
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? AppColors.ink : AppColors.muted,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),

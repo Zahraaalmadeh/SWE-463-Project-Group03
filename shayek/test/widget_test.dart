@@ -28,9 +28,8 @@ Future<void> _pumpApp(WidgetTester tester) async {
         ),
         ChangeNotifierProvider(create: (_) => ChecklistProvider()),
         ChangeNotifierProvider(
-          create: (_) => TemplateProvider(
-            repository: InMemoryTemplateRepository(),
-          ),
+          create: (_) =>
+              TemplateProvider(repository: InMemoryTemplateRepository()),
         ),
       ],
       child: MaterialApp(
@@ -47,7 +46,7 @@ void main() {
     await _pumpApp(tester);
 
     expect(find.text('Shayek'), findsWidgets);
-    expect(find.text('New Trip'), findsOneWidget);
+    expect(find.text('New trip'), findsOneWidget);
   });
 
   testWidgets('Home, Create Trip, and Templates are reachable', (tester) async {
@@ -55,13 +54,13 @@ void main() {
 
     await tester.tap(find.text('Lists').first);
     await tester.pumpAndSettle();
-    expect(find.text('Your Lists'), findsOneWidget);
+    expect(find.text('Your packing lists'), findsOneWidget);
 
     await tester.tap(find.text('Home').first);
     await tester.pumpAndSettle();
     expect(find.text('Shayek'), findsWidgets);
 
-    await tester.tap(find.text('New Trip'));
+    await tester.tap(find.text('New trip'));
     await tester.pumpAndSettle();
     expect(find.text('Where are you headed?'), findsOneWidget);
   });
@@ -69,13 +68,13 @@ void main() {
   testWidgets('Create Trip back button returns to Home', (tester) async {
     await _pumpApp(tester);
 
-    await tester.tap(find.text('New Trip'));
+    await tester.tap(find.text('New trip'));
     await tester.pumpAndSettle();
     expect(find.text('Where are you headed?'), findsOneWidget);
 
     await tester.tap(find.bySemanticsLabel('Back'));
     await tester.pumpAndSettle();
     expect(find.text('Where are you headed?'), findsNothing);
-    expect(find.text('Ready for your next adventure?'), findsOneWidget);
+    expect(find.text('Your trips'), findsOneWidget);
   });
 }
