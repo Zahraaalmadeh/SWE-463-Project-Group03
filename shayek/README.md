@@ -17,7 +17,7 @@ Phase 3 establishes the shared Flutter project skeleton and the navigation found
 
 `Home -> Create Trip -> Generate Packing Checklist -> Manage Checklist -> Save as Template -> Templates`
 
-The priority features are Trip Creation, Generated Packing Checklist, Checklist Management, and Reusable Packing Templates. This skeleton deliberately provides the project structure, navigation, models, state-management shells, database schema, and basic validation required to start those features. It does **not** claim that the complete feature implementations are finished.
+The priority features are Trip Creation, Generated Packing Checklist, Checklist Management, and Reusable Packing Templates. All four now work end to end; the sections below list what is done and what is still planned.
 
 ## Main project features
 
@@ -28,25 +28,30 @@ The priority features are Trip Creation, Generated Packing Checklist, Checklist 
 - Organize family-member and shared items.
 - Use a return checklist and departure reminder.
 
-## Implemented in this skeleton
+## What works now
 
-- Material 3 application theme (see **UI design** below) and a clean Flutter project structure.
-- Named routes for all six planned screens.
-- Home/Lists navigation shell with a shared top bar and footer.
-- Home page listing upcoming trips as boarding-pass cards, with empty, loading, and error states.
-- Empty route placeholder files for Create Trip, Checklist, Templates, Family Members, and Return Checklist.
-- Reachable placeholder screens for checklist, templates, family members, and return checklist.
-- Null-safe base models for `Trip`, `PackingItem`, `PackingTemplate`, and `TemplateItem`.
-- `TripProvider`, `ChecklistProvider`, and `TemplateProvider` registered through `MultiProvider`.
-- Local SQLite database initialization and tables for `trips`, `travelers`, `packing_items`, `templates`, and `template_items`.
+- **Home**: lists saved trips as boarding-pass cards, with loading, empty, and error states. Tapping a trip opens its checklist.
+- **Create Trip**: name (up to 60 characters), trip type, duration (1–90 days), travelers (1–20), and departure date, with inline validation (required name, no past dates). Saving stores the trip and opens its generated checklist.
+- **Packing checklist**:
+  - generates suggested items from the trip's type, length, and traveler count
+  - add, edit, and delete items, each with a category, quantity, and optional "shared" flag
+  - mark items packed, with a live progress bar and counts
+  - search by name and filter by status (all / to pack / packed) and category
+  - regenerate the checklist, remove all packed items, or save it as a reusable list
+- **Lists (templates)**:
+  - create a list from scratch, or save one from a checklist
+  - rename, delete, and make a list public or private
+  - "Use List" attaches a list to an existing trip and opens that trip's checklist
+  - search public lists by name, trip type, or item
+- **Storage**: trips and lists are saved in a local SQLite database (IndexedDB in the browser).
+- **Shared design**: one theme for every screen (see **UI design** below).
 
-## Intentionally unfinished
+## Not yet implemented
 
-- Trips, checklist items, templates, and travelers are not yet saved or loaded in the UI.
-- Checklist generation, checklist CRUD, categorization, packed-state updates, and progress tracking are not implemented yet.
-- Saving, editing, deleting, and applying templates are not implemented yet.
-- Trip creation fields and validation are not implemented yet; the Create Trip page only links to the checklist route.
-- Family Members and Return Checklist are basic navigable placeholders planned for **Phase 4**. Return reminders and notifications are also deferred; no notification package is included.
+- Checklist items are kept in memory only, so they are regenerated after the app restarts.
+- Family Members and Return Checklist are reachable placeholder screens planned for **Phase 4**.
+- Departure reminders and notifications are deferred; no notification package is included.
+- There is no sign-in; the Home greeting uses a placeholder name.
 
 ## UI design
 
@@ -83,17 +88,21 @@ data is scoped to the app's origin and port.
 
 ```text
 lib/
-  main.dart                 App entry point, theme, providers, and routes
+  main.dart                 App entry point, providers, theme, and routes
   app_routes.dart           Named-route definitions
+  theme/                    Shared colours, text styles, and ThemeData
   models/                   Null-safe application data models
-  providers/                Shared ChangeNotifier state shells
-  screens/                  Feature screens and navigation shell
-  widgets/                  Reusable, temporary UI components
-  database/                 SQLite initialization and table schema
-  repositories/             Reserved for persistence abstractions as CRUD is added
+  providers/                Shared ChangeNotifier state (trips, checklist, lists)
+  database/                 SQLite setup plus trip and template repositories
+  screens/                  Feature screens and the Home/Lists navigation shell
+  widgets/                  Reusable UI components (top bar, footer, trip card)
+  repositories/             Reserved for future persistence abstractions
+test/
+  fakes/                    In-memory repositories used by the tests
+  *_test.dart               Provider, screen, and flow tests
 ```
 
-Screens interact with Providers; Providers will later call the database/repository layer. Screens should not access SQLite directly.
+Screens talk to Providers, and Providers call the repositories in `database/`. Screens never access SQLite directly, which lets the tests swap in the in-memory fakes.
 
 ## Install dependencies
 
@@ -113,26 +122,46 @@ flutter devices
 flutter run -d chrome
 ```
 
-Replace `chrome` with a device ID from `flutter devices` when needed.
+Replace `chrome` with a device ID from `flutter devices` when needed, for example `macos` for the desktop app:
 
-## Run static analysis
+```bash
+flutter run -d macos
+```
+
+While it runs, press `r` to hot reload or `R` to hot restart after editing code.
+
+## Run static analysis and tests
 
 ```bash
 flutter analyze
+flutter test
 ```
 
-## Current navigation flow
+The tests cover the trip and checklist providers, the Create Trip screen, and the Home → Create Trip → Checklist flow.
 
-- `/` opens the Home tab.
-- Home can open `/create-trip`.
-- Home can open `/create-trip`.
-- The remaining named routes are registered and ready for their feature owners to connect.
-- Home and Templates are available through the bottom navigation bar.
-- AppBar Back buttons and system Back return to the preceding route.
+## Screens and routes
+
+On the web, routes appear after `#`, e.g. `http://localhost:<port>/#/create-trip`.
+
+| Route | Screen |
+|---|---|
+| `/` | Home: your upcoming trips |
+| `/templates` | Lists: your saved lists and public lists |
+| `/create-trip` | Create Trip form |
+| `/checklist` | Packing checklist for the selected trip (opened from Home, Create Trip, or Use List) |
+| `/template-editor` | New list editor (normally opened as a dialog from Lists) |
+| `/family` | Family Members (Phase 4 placeholder) |
+| `/return-checklist` | Return Checklist (Phase 4 placeholder) |
+
+- Home and Lists are switched from the top bar.
+- Back buttons and the system Back gesture return to the previous screen.
+- Unknown routes fall back to Home.
 
 ## Current limitations
 
-The web database is stored in browser IndexedDB, so data is scoped to the app's origin and port. The Family Members and Return Checklist features remain planned for Phase 4.
+- The web database is stored in browser IndexedDB, so data is scoped to the app's origin and port: running on a different port starts with an empty database.
+- Headings use Georgia. Flutter web cannot load the computer's system fonts, so in the browser they fall back to a sans-serif font; desktop builds show the serif.
+- Checklist items are not yet persisted (see **Not yet implemented**).
 
 ## AI-use disclosure
 
