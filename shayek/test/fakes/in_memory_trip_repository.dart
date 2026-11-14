@@ -35,6 +35,17 @@ class InMemoryTripRepository implements TripRepository {
     return null;
   }
 
+  @override
+  Future<void> attachList(String tripId, String? listId) async {
+    _maybeFail();
+    for (final row in rows) {
+      if (row['id'] == tripId) {
+        row['list_id'] = listId;
+        return;
+      }
+    }
+  }
+
   void _maybeFail() {
     final error = failWith;
     if (error != null) throw error;

@@ -529,10 +529,16 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                       children: [
                         _categoryIcon(item.category, size: 14),
                         const SizedBox(width: 4),
-                        Text(
-                          item.category,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: _muted, fontSize: 12),
+                        Flexible(
+                          child: Text(
+                            item.category,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: _muted,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ],
                     ),
