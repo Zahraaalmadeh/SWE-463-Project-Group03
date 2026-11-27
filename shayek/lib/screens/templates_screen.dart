@@ -280,13 +280,31 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
     PackingTemplate template,
     ListVisibility visibility,
   ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final makingPublic = visibility == ListVisibility.public;
     try {
       await context.read<TemplateProvider>().updateVisibility(
         template,
         visibility,
       );
-    } catch (error) {
-      debugPrint('Failed to update list visibility: $error');
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            makingPublic
+                ? '"${template.name}" is now public.'
+                : '"${template.name}" is now private.',
+          ),
+        ),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not make "${template.name}" '
+            '${makingPublic ? 'public' : 'private'}. Please try again.',
+          ),
+        ),
+      );
     }
   }
 

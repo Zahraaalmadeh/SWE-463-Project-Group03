@@ -3,9 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shayek/models/trip.dart';
 import 'package:shayek/providers/checklist_provider.dart';
+import 'package:shayek/providers/traveler_provider.dart';
 import 'package:shayek/providers/template_provider.dart';
 import 'package:shayek/screens/checklist_screen.dart';
 
+import 'fakes/in_memory_traveler_repository.dart';
 import 'fakes/in_memory_template_repository.dart';
 
 /// These dialogs used to dispose their text controllers as soon as the
@@ -35,6 +37,10 @@ Future<(ChecklistProvider, InMemoryTemplateRepository)> _pumpChecklist(
         ChangeNotifierProvider.value(value: checklist),
         ChangeNotifierProvider(
           create: (_) => TemplateProvider(repository: templates),
+        ),
+        ChangeNotifierProvider(
+          create: (_) =>
+              TravelerProvider(repository: InMemoryTravelerRepository()),
         ),
       ],
       child: MaterialApp(home: ChecklistScreen(trip: trip)),

@@ -12,8 +12,12 @@ class HomeTrip {
     required this.typeLabel,
     required this.departureDay,
     required this.departureMonthYear,
+    required this.departureLabel,
     required this.details,
-    required this.progress,
+    required this.packedCount,
+    required this.totalCount,
+    this.progressUnavailable = false,
+    this.reminderLabel,
   });
 
   final String name;
@@ -28,33 +32,69 @@ class HomeTrip {
   /// e.g. "Nov 2026", shown under [departureDay].
   final String departureMonthYear;
 
+  /// e.g. "20 Nov 2026", read out by screen readers.
+  final String departureLabel;
+
   /// e.g. "5 days · 4 travelers".
   final String details;
-  final double progress;
+
+  /// Packed and total packing items (return items excluded).
+  final int packedCount;
+  final int totalCount;
+
+  /// True when this trip's items could not be loaded, so the counts above
+  /// are unknown rather than zero.
+  final bool progressUnavailable;
+
+  /// e.g. "Reminder 9:00 PM" when a departure reminder is on, else null.
+  final String? reminderLabel;
+
+  double get progress => totalCount == 0 ? 0 : packedCount / totalCount;
+  int get percent => (progress * 100).round();
+
+  /// One sentence describing the card for screen readers.
+  String get semanticsLabel {
+    final status = progressUnavailable
+        ? 'packing progress unavailable'
+        : totalCount == 0
+        ? 'no items yet'
+        : '$packedCount of $totalCount items packed';
+    final reminder = reminderLabel == null ? '' : ', ${reminderLabel!}';
+    return '$name, ${type.name} trip, departs $departureLabel, '
+        '$details, $status$reminder';
+  }
 }
 
 /// Height every Home card shares, so tickets and the "Plan another trip" card
 /// line up in the grid.
-const double homeCardHeight = 176;
+const double homeCardHeight = 214;
 
 /// A trip drawn as a boarding pass: details on the left, a dashed tear line,
 /// and the departure date on a stub tinted by trip type. Lifts slightly on
-/// hover.
+/// hover. Tapping the card opens the checklist; the links along the bottom
+/// open the trip's Family members and Return checklist screens.
 class HomeTripCard extends StatefulWidget {
-  const HomeTripCard({super.key, required this.trip, this.onTap});
+  const HomeTripCard({
+    super.key,
+    required this.trip,
+    this.onTap,
+    this.onFamilyMembers,
+    this.onReturnChecklist,
+  });
 
   final HomeTrip trip;
 
   /// Null disables the tap (InkWell just shows no ripple); Home always
   /// passes a callback that opens that trip's Checklist.
   final VoidCallback? onTap;
+  final VoidCallback? onFamilyMembers;
+  final VoidCallback? onReturnChecklist;
 
   @override
   State<HomeTripCard> createState() => _HomeTripCardState();
 }
 
 class _HomeTripCardState extends State<HomeTripCard> {
-  static const _stubWidth = 140.0;
   static const _notch = 22.0;
   static const _radius = 18.0;
 
@@ -65,120 +105,303 @@ class _HomeTripCardState extends State<HomeTripCard> {
     final trip = widget.trip;
     final colors = TripTypeColors.of(trip.type);
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOut,
-        transform: Matrix4.translationValues(0, _hovered ? -2 : 0, 0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(_radius),
-          boxShadow: [
-            if (_hovered)
-              const BoxShadow(
-                color: Color(0x141E2430),
-                blurRadius: 24,
-                offset: Offset(0, 10),
-              ),
-          ],
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Material(
-              color: AppColors.surface,
-              clipBehavior: Clip.antiAlias,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(_radius),
-                side: const BorderSide(color: AppColors.line),
-              ),
-              child: InkWell(
-                onTap: widget.onTap,
-                hoverColor: Colors.transparent,
-                child: SizedBox(
-                  height: homeCardHeight,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: _TicketBody(trip: trip, colors: colors),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // On phones the date stub narrows so the trip details keep room.
+        final compact = constraints.maxWidth < 440;
+        final stubWidth = compact ? 100.0 : 140.0;
+
+        return MouseRegion(
+          onEnter: (_) => setState(() => _hovered = true),
+          onExit: (_) => setState(() => _hovered = false),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
+            transform: Matrix4.translationValues(0, _hovered ? -2 : 0, 0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_radius),
+              boxShadow: [
+                if (_hovered)
+                  const BoxShadow(
+                    color: Color(0x141E2430),
+                    blurRadius: 24,
+                    offset: Offset(0, 10),
+                  ),
+              ],
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Material(
+                  color: AppColors.surface,
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(_radius),
+                    side: const BorderSide(color: AppColors.line),
+                  ),
+                  child: Semantics(
+                    button: true,
+                    label: trip.semanticsLabel,
+                    child: InkWell(
+                      onTap: widget.onTap,
+                      hoverColor: Colors.transparent,
+                      // At least homeCardHeight, taller if the text needs it
+                      // (long names, large system text sizes).
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minHeight: homeCardHeight,
+                        ),
+                        child: IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: _TicketBody(
+                                  trip: trip,
+                                  colors: colors,
+                                  compact: compact,
+                                  onFamilyMembers: widget.onFamilyMembers,
+                                  onReturnChecklist: widget.onReturnChecklist,
+                                ),
+                              ),
+                              const _Perforation(),
+                              _TicketStub(
+                                trip: trip,
+                                colors: colors,
+                                width: stubWidth,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      const _Perforation(),
-                      _TicketStub(
-                        trip: trip,
-                        colors: colors,
-                        width: _stubWidth,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+                // Half-circle notches where the ticket would tear, painted in
+                // the page colour so they read as cut-outs.
+                for (final top in [true, false])
+                  Positioned(
+                    right: stubWidth - _notch / 2,
+                    top: top ? -_notch / 2 : null,
+                    bottom: top ? null : -_notch / 2,
+                    child: const IgnorePointer(child: _Notch(size: _notch)),
+                  ),
+              ],
             ),
-            // Half-circle notches where the ticket would tear, painted in the
-            // page colour so they read as cut-outs.
-            for (final top in [true, false])
-              Positioned(
-                right: _stubWidth - _notch / 2,
-                top: top ? -_notch / 2 : null,
-                bottom: top ? null : -_notch / 2,
-                child: const IgnorePointer(child: _Notch(size: _notch)),
-              ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
 
 class _TicketBody extends StatelessWidget {
-  const _TicketBody({required this.trip, required this.colors});
+  const _TicketBody({
+    required this.trip,
+    required this.colors,
+    required this.compact,
+    this.onFamilyMembers,
+    this.onReturnChecklist,
+  });
 
   final HomeTrip trip;
   final TripTypeColors colors;
+  final bool compact;
+  final VoidCallback? onFamilyMembers;
+  final VoidCallback? onReturnChecklist;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+      padding: EdgeInsets.fromLTRB(
+        compact ? 18 : 28,
+        18,
+        compact ? 14 : 22,
+        10,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(trip.typeLabel, style: AppText.eyebrow(colors.onTint)),
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  trip.typeLabel,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.eyebrow(colors.onTint),
+                ),
+              ),
+              if (trip.reminderLabel != null) ...[
+                const SizedBox(width: 10),
+                _ReminderBadge(label: trip.reminderLabel!),
+              ],
+            ],
+          ),
           const SizedBox(height: 8),
           Text(
             trip.name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppText.cardTitle.copyWith(fontSize: 24, height: 1.15),
+            style: AppText.cardTitle.copyWith(
+              fontSize: compact ? 21 : 26,
+              height: 1.15,
+            ),
           ),
-          const Spacer(),
+          const SizedBox(height: 6),
           Text(
             trip.details,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: AppColors.muted, fontSize: 14),
           ),
-          const SizedBox(height: 8),
-          Row(
+          const Spacer(),
+          _ProgressLine(trip: trip),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 4,
             children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: trip.progress,
-                    minHeight: 4,
-                    backgroundColor: AppColors.line,
-                    color: AppColors.primary,
-                  ),
-                ),
+              _CardLink(
+                icon: Icons.people_outline,
+                label: 'Family members',
+                onPressed: onFamilyMembers,
               ),
-              const SizedBox(width: 8),
-              Text(
-                '${(trip.progress * 100).round()}% packed',
-                style: const TextStyle(color: AppColors.muted, fontSize: 12),
+              _CardLink(
+                icon: Icons.assignment_return_outlined,
+                label: 'Return checklist',
+                onPressed: onReturnChecklist,
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// "26 of 42 packed" with a slim bar and the percentage, or a clear note when
+/// the trip has no items yet or its items could not be loaded.
+class _ProgressLine extends StatelessWidget {
+  const _ProgressLine({required this.trip});
+
+  final HomeTrip trip;
+
+  @override
+  Widget build(BuildContext context) {
+    if (trip.progressUnavailable) {
+      return const Row(
+        children: [
+          Icon(Icons.error_outline, size: 15, color: AppColors.error),
+          SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              'Couldn’t load packing progress',
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: AppColors.error, fontSize: 13),
+            ),
+          ),
+        ],
+      );
+    }
+    final label = trip.totalCount == 0
+        ? 'No items yet'
+        : '${trip.packedCount} of ${trip.totalCount} packed';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Text(
+              '${trip.percent}%',
+              style: const TextStyle(color: AppColors.muted, fontSize: 13),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(value: trip.progress, minHeight: 5),
+        ),
+      ],
+    );
+  }
+}
+
+/// Small bell + time shown next to the trip type when a reminder is on.
+class _ReminderBadge extends StatelessWidget {
+  const _ReminderBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4D6),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.notifications_active_outlined,
+            size: 13,
+            color: Color(0xFF7A5A00),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF7A5A00),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact text link along the bottom of a trip card.
+class _CardLink extends StatelessWidget {
+  const _CardLink({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      label: Text(label),
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.primary,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        minimumSize: const Size(0, 36),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: const TextStyle(
+          fontFamily: AppText.sans,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

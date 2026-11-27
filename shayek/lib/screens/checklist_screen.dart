@@ -7,6 +7,8 @@ import '../models/packing_template.dart';
 import '../models/trip.dart';
 import '../providers/checklist_provider.dart';
 import '../providers/template_provider.dart';
+import '../providers/traveler_provider.dart';
+import '../models/traveler.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_bottom_navigation_bar.dart';
 import '../widgets/text_prompt_dialog.dart';
@@ -48,6 +50,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       if (!mounted) return;
       final checklist = context.read<ChecklistProvider>();
       checklist.selectTrip(_trip.id);
+      // Family members, so items can be assigned to them in the item editor.
+      context.read<TravelerProvider>().loadTravelers(_trip.id);
       checklist.loadItems(_trip.id).then((_) {
         if (!mounted) return;
         if (widget.template != null) {
@@ -65,8 +69,12 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     super.dispose();
   }
 
+  /// The trip's family members; watched so rows show names once loaded.
+  List<Traveler> _travelers = const [];
+
   @override
   Widget build(BuildContext context) {
+    _travelers = context.watch<TravelerProvider>().travelers;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Consumer<ChecklistProvider>(
@@ -164,20 +172,11 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         if (action == 'generate') _showGenerateDialog();
         if (action == 'clear') _confirmRemovePacked();
         if (action == 'save-template') _saveAsTemplate();
-        if (action == 'family') {
-          Navigator.of(context).pushNamed(AppRoutes.family, arguments: _trip);
-        }
-        if (action == 'return') {
-          Navigator.of(context)
-              .pushNamed(AppRoutes.returnChecklist, arguments: _trip);
-        }
       },
       itemBuilder: (_) => const [
         PopupMenuItem(value: 'generate', child: Text('Regenerate checklist')),
         PopupMenuItem(value: 'clear', child: Text('Remove packed items')),
         PopupMenuItem(value: 'save-template', child: Text('Save as list')),
-        PopupMenuItem(value: 'family', child: Text('Family members')),
-        PopupMenuItem(value: 'return', child: Text('Return checklist')),
       ],
       child: Container(
         width: 48,
@@ -265,6 +264,26 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
             ),
             const SizedBox(height: 8),
             Text(subtitle, style: const TextStyle(color: _muted, fontSize: 16)),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                _TripLink(
+                  icon: Icons.people_outline,
+                  label: 'Family members',
+                  onPressed: () =>
+                      Navigator.of(context)
+                          .pushNamed(AppRoutes.family, arguments: _trip),
+                ),
+                _TripLink(
+                  icon: Icons.assignment_return_outlined,
+                  label: 'Return checklist',
+                  onPressed: () => Navigator.of(context)
+                      .pushNamed(AppRoutes.returnChecklist, arguments: _trip),
+                ),
+              ],
+            ),
           ],
         ),
         Row(
@@ -500,6 +519,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               for (final item in shown)
                 _ItemRow(
                   item: item,
+                  memberName: _memberName(item.travelerId),
                   onToggle: () => checklist.togglePacked(item.id),
                   onEdit: () => _showItemEditor(item),
                   onDelete: () => _confirmDelete(item),
@@ -551,10 +571,23 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     ),
   );
 
+  /// Name of the family member an item is assigned to, or null when it is
+  /// for everyone (or that member was removed).
+  String? _memberName(String? travelerId) {
+    if (travelerId == null) return null;
+    for (final traveler in _travelers) {
+      if (traveler.id == travelerId) return traveler.name;
+    }
+    return null;
+  }
+
   Future<void> _showItemEditor([PackingItem? item]) async {
     final draft = await showDialog<_ItemDraft>(
       context: context,
-      builder: (_) => _ItemEditorDialog(item: item),
+      builder: (_) => _ItemEditorDialog(
+        item: item,
+        travelers: context.read<TravelerProvider>().travelers,
+      ),
     );
     if (!mounted || draft == null) return;
 
@@ -565,13 +598,14 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         category: draft.category,
         quantity: draft.quantity,
         isShared: draft.isShared,
+        travelerId: draft.travelerId,
       );
     } else {
       checklist.updateItem(
         PackingItem(
           id: item.id,
           tripId: item.tripId,
-          travelerId: item.travelerId,
+          travelerId: draft.travelerId,
           name: draft.name,
           category: draft.category,
           quantity: draft.quantity,
@@ -689,6 +723,37 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
 enum _ChecklistFilter { all, toPack, packed }
 
+/// Text link under the trip title (Family members, Return checklist).
+class _TripLink extends StatelessWidget {
+  const _TripLink({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 17),
+      label: Text(label),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        minimumSize: const Size(0, 36),
+        textStyle: const TextStyle(
+          fontFamily: AppText.sans,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
 /// What the item editor returns when the user saves.
 class _ItemDraft {
   const _ItemDraft({
@@ -696,21 +761,28 @@ class _ItemDraft {
     required this.category,
     required this.quantity,
     required this.isShared,
+    this.travelerId,
   });
 
   final String name;
   final String category;
   final int quantity;
   final bool isShared;
+
+  /// Family member the item is for, or null for everyone.
+  final String? travelerId;
 }
 
 /// Add/edit packing item dialog. It owns its text controllers so they live
 /// until the dialog is gone, including its closing animation.
 class _ItemEditorDialog extends StatefulWidget {
-  const _ItemEditorDialog({this.item});
+  const _ItemEditorDialog({this.item, this.travelers = const []});
 
   /// The item being edited, or null when adding a new one.
   final PackingItem? item;
+
+  /// The trip's family members, offered in "Assigned to".
+  final List<Traveler> travelers;
 
   @override
   State<_ItemEditorDialog> createState() => _ItemEditorDialogState();
@@ -725,6 +797,11 @@ class _ItemEditorDialogState extends State<_ItemEditorDialog> {
   );
   late String _category = widget.item?.category ?? 'Clothing';
   late bool _isShared = widget.item?.isShared ?? false;
+  // Keep the assignment only if that member still exists.
+  late String? _travelerId =
+      widget.travelers.any((t) => t.id == widget.item?.travelerId)
+      ? widget.item?.travelerId
+      : null;
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -743,6 +820,7 @@ class _ItemEditorDialogState extends State<_ItemEditorDialog> {
         category: _category,
         quantity: int.parse(_quantityController.text),
         isShared: _isShared,
+        travelerId: _travelerId,
       ),
     );
   }
@@ -794,6 +872,23 @@ class _ItemEditorDialogState extends State<_ItemEditorDialog> {
                       : null;
                 },
               ),
+              if (widget.travelers.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String?>(
+                  initialValue: _travelerId,
+                  borderRadius: BorderRadius.circular(20),
+                  decoration: const InputDecoration(labelText: 'Assigned to'),
+                  items: [
+                    const DropdownMenuItem<String?>(child: Text('Everyone')),
+                    for (final traveler in widget.travelers)
+                      DropdownMenuItem<String?>(
+                        value: traveler.id,
+                        child: Text(traveler.name),
+                      ),
+                  ],
+                  onChanged: (value) => setState(() => _travelerId = value),
+                ),
+              ],
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Shared item'),
@@ -989,12 +1084,16 @@ class _CategoryChip extends StatelessWidget {
 class _ItemRow extends StatefulWidget {
   const _ItemRow({
     required this.item,
+    this.memberName,
     required this.onToggle,
     required this.onEdit,
     required this.onDelete,
   });
 
   final PackingItem item;
+
+  /// Family member this item is assigned to, shown next to the name.
+  final String? memberName;
   final VoidCallback onToggle;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -1067,6 +1166,26 @@ class _ItemRowState extends State<_ItemRow> {
                         decorationColor: AppColors.muted,
                       ),
                     ),
+                    if (widget.memberName != null)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.person_outline,
+                            size: 14,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            widget.memberName!,
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     if (item.isShared)
                       const Text(
                         'shared',

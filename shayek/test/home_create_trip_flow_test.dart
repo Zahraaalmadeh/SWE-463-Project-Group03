@@ -4,10 +4,12 @@ import 'package:provider/provider.dart';
 import 'package:shayek/app_routes.dart';
 import 'package:shayek/models/trip.dart';
 import 'package:shayek/providers/checklist_provider.dart';
+import 'package:shayek/providers/traveler_provider.dart';
 import 'package:shayek/providers/template_provider.dart';
 import 'package:shayek/providers/trip_provider.dart';
 import 'package:shayek/widgets/home_trip_card.dart';
 
+import 'fakes/in_memory_traveler_repository.dart';
 import 'fakes/in_memory_trip_repository.dart';
 
 /// Mirrors ShayekApp's providers and routes, but with an in-memory trips
@@ -21,6 +23,10 @@ Future<void> _pumpApp(WidgetTester tester, InMemoryTripRepository repo) async {
         ChangeNotifierProvider(create: (_) => TripProvider(repository: repo)),
         ChangeNotifierProvider(create: (_) => ChecklistProvider()),
         ChangeNotifierProvider(create: (_) => TemplateProvider()),
+        ChangeNotifierProvider(
+          create: (_) =>
+              TravelerProvider(repository: InMemoryTravelerRepository()),
+        ),
       ],
       child: const MaterialApp(
         initialRoute: AppRoutes.home,

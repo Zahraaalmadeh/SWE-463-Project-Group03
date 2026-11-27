@@ -33,11 +33,13 @@ class TripProvider extends ChangeNotifier {
     return null;
   }
 
-  /// Loads every trip from the local database. Screens call this once (e.g.
-  /// from initState) and otherwise only read `trips`/`isLoading`/`errorMessage`
-  /// through this provider, never through DatabaseService directly.
-  Future<void> loadTrips() async {
-    if (_hasLoaded || _isLoading) return;
+  /// Loads every trip from the local database, soonest departure first.
+  /// Screens call this once (e.g. from initState) and otherwise only read
+  /// `trips`/`isLoading`/`errorMessage` through this provider, never through
+  /// DatabaseService directly. Pass [refresh] to load again after a failure
+  /// (Home's "Try again" button).
+  Future<void> loadTrips({bool refresh = false}) async {
+    if ((_hasLoaded && !refresh) || _isLoading) return;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -46,7 +48,8 @@ class TripProvider extends ChangeNotifier {
       final saved = await _repository.getTrips();
       _trips
         ..clear()
-        ..addAll(saved);
+        ..addAll(saved)
+        ..sort((a, b) => a.departureDate.compareTo(b.departureDate));
       _hasLoaded = true;
     } catch (error) {
       _errorMessage = 'Could not load trips. Please try again.';

@@ -4,10 +4,12 @@ import 'package:provider/provider.dart';
 import 'package:shayek/app_routes.dart';
 import 'package:shayek/models/trip.dart';
 import 'package:shayek/providers/checklist_provider.dart';
+import 'package:shayek/providers/traveler_provider.dart';
 import 'package:shayek/providers/trip_provider.dart';
 import 'package:shayek/screens/checklist_screen.dart';
 import 'package:shayek/screens/create_trip_screen.dart';
 
+import 'fakes/in_memory_traveler_repository.dart';
 import 'fakes/in_memory_trip_repository.dart';
 
 /// Typical phone viewport so layout issues surface at mobile sizes.
@@ -33,6 +35,10 @@ Future<TripProvider> _pumpFromLauncher(
       providers: [
         ChangeNotifierProvider.value(value: provider),
         ChangeNotifierProvider(create: (_) => ChecklistProvider()),
+        ChangeNotifierProvider(
+          create: (_) =>
+              TravelerProvider(repository: InMemoryTravelerRepository()),
+        ),
       ],
       child: MaterialApp(
         onGenerateRoute: AppRoutes.generateRoute,

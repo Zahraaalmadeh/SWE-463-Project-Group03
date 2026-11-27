@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../app_routes.dart';
+import '../models/traveler.dart';
 import '../models/trip.dart';
+import '../providers/checklist_provider.dart';
 import '../providers/traveler_provider.dart';
+import '../theme/app_theme.dart';
+import '../widgets/page_scaffold.dart';
 
+/// The people travelling on a trip. Items can then be assigned to a member
+/// from the checklist's item editor; each member shows how many they have.
 class FamilyMembersScreen extends StatefulWidget {
   const FamilyMembersScreen({super.key, this.trip});
 
@@ -35,102 +42,174 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
 
   Future<void> _addMember() async {
     final name = _nameController.text;
+    final messenger = ScaffoldMessenger.of(context);
+    final travelers = context.read<TravelerProvider>();
     try {
-      await context.read<TravelerProvider>().addTraveler(name);
+      await travelers.addTraveler(name);
       if (!mounted) return;
-      _nameController.clear();
-      if (context.read<TravelerProvider>().errorMessage == null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Family member added')));
+      if (travelers.errorMessage == null) {
+        _nameController.clear();
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Family member added')),
+        );
       }
     } on ArgumentError catch (_) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Enter a family member name')),
       );
     }
   }
 
+  Future<void> _removeMember(Traveler traveler) async {
+    final travelers = context.read<TravelerProvider>();
+    final checklist = context.read<ChecklistProvider>();
+    await travelers.removeTraveler(traveler.id);
+    if (!mounted || travelers.errorMessage != null) return;
+    // Items assigned to this person go back to "Everyone".
+    checklist.unassignTraveler(traveler.id);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('${traveler.name} removed')));
+  }
+
   @override
   Widget build(BuildContext context) {
     final trip = widget.trip;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Family Members')),
-      body: Consumer<TravelerProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return Padding(
-            padding: const EdgeInsets.all(20),
+    if (trip == null) {
+      return const PageScaffold(
+        backLabel: 'Back',
+        title: 'Family members',
+        child: PageMessage(
+          title: 'No trip selected',
+          message: 'Open Family members from one of your trips.',
+        ),
+      );
+    }
+
+    return PageScaffold(
+      backLabel: 'Back',
+      title: 'Family members',
+      subtitle:
+          '${trip.name} · assign items to each person from the '
+          'checklist’s item editor.',
+      child: Consumer2<TravelerProvider, ChecklistProvider>(
+        builder: (context, provider, checklist, _) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PillInputRow(
+                controller: _nameController,
+                hint: 'Family member name',
+                buttonLabel: 'Add',
+                onSubmit: _addMember,
+              ),
+              const SizedBox(height: 14),
+              if (provider.errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: InlineError(message: provider.errorMessage!),
+                ),
+              if (provider.isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 48),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (provider.travelers.isEmpty)
+                const PageMessage(
+                  title: 'No family members yet',
+                  message:
+                      'Add the people travelling on this trip, then assign '
+                      'items to them from the checklist.',
+                )
+              else
+                SheetCard(
+                  children: [
+                    for (final traveler in provider.travelers)
+                      _MemberRow(
+                        traveler: traveler,
+                        itemCount: checklist.assignedCountFor(
+                          trip.id,
+                          traveler.id,
+                        ),
+                        onRemove: () => _removeMember(traveler),
+                      ),
+                  ],
+                ),
+              const SizedBox(height: 20),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context)
+                          .pushNamed(AppRoutes.checklist, arguments: trip),
+                  icon: const Icon(Icons.checklist, size: 18),
+                  label: const Text('Open packing checklist'),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MemberRow extends StatelessWidget {
+  const _MemberRow({
+    required this.traveler,
+    required this.itemCount,
+    required this.onRemove,
+  });
+
+  final Traveler traveler;
+  final int itemCount;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = traveler.name.isEmpty
+        ? '?'
+        : traveler.name.characters.first.toUpperCase();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.sand,
+            child: Text(
+              initial,
+              style: const TextStyle(
+                color: AppColors.ink,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (trip != null)
-                  Text(
-                    trip.name,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _nameController,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => _addMember(),
-                        decoration: const InputDecoration(
-                          labelText: 'Family member name',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    FilledButton(
-                      onPressed: _addMember,
-                      child: const Text('Add'),
-                    ),
-                  ],
+                Text(
+                  traveler.name,
+                  style: const TextStyle(color: AppColors.ink, fontSize: 16),
                 ),
-                const SizedBox(height: 16),
-                if (provider.errorMessage != null)
-                  Text(
-                    provider.errorMessage!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                if (provider.travelers.isEmpty)
-                  const Expanded(
-                    child: Center(
-                      child: Text('No family members have been added.'),
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: ListView.separated(
-                      itemCount: provider.travelers.length,
-                      separatorBuilder: (_, _) => const Divider(),
-                      itemBuilder: (context, index) {
-                        final traveler = provider.travelers[index];
-                        return ListTile(
-                          leading: const CircleAvatar(
-                            child: Icon(Icons.person_outline),
-                          ),
-                          title: Text(traveler.name),
-                          trailing: IconButton(
-                            tooltip: 'Remove ${traveler.name}',
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: () =>
-                                provider.removeTraveler(traveler.id),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                const SizedBox(height: 2),
+                Text(
+                  itemCount == 0
+                      ? 'No items assigned'
+                      : '$itemCount item${itemCount == 1 ? '' : 's'} assigned',
+                  style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                ),
               ],
             ),
-          );
-        },
+          ),
+          IconButton(
+            tooltip: 'Remove ${traveler.name}',
+            icon: const Icon(Icons.delete_outline, size: 20),
+            color: AppColors.muted,
+            onPressed: onRemove,
+          ),
+        ],
       ),
     );
   }

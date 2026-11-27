@@ -28,12 +28,17 @@ class TemplateProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     try {
+      final saved = await _repository.getTemplates();
+      // Built-in example public lists are not stored in the database; they
+      // are always offered alongside the user's own lists (see README).
       _templates
         ..clear()
-        ..addAll(await _repository.getTemplates());
-      if (_templates.isEmpty) {
-        _templates.addAll(_samplePublicLists);
-      }
+        ..addAll(saved)
+        ..addAll(
+          _samplePublicLists.where(
+            (sample) => saved.every((template) => template.id != sample.id),
+          ),
+        );
       _hasLoaded = true;
     } catch (error) {
       _errorMessage = 'Could not load templates. Please try again.';

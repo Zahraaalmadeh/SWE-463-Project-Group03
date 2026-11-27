@@ -20,6 +20,10 @@ class ChecklistProvider extends ChangeNotifier {
   bool _isLoading = false;
   int _idCounter = 0;
 
+  /// Trips whose items failed to load, so Home can say so instead of
+  /// showing a misleading 0%.
+  final Set<String> _failedTripLoads = {};
+
   static const categories = <String>[
     'Clothing',
     'Toiletries',
@@ -47,14 +51,28 @@ class ChecklistProvider extends ChangeNotifier {
     ),
   );
 
+  Iterable<PackingItem> _packingItemsFor(String tripId) =>
+      _allItems.where((item) => item.tripId == tripId && !item.isReturnItem);
+
+  /// Packing items (return items excluded) for [tripId].
+  int totalCountFor(String tripId) => _packingItemsFor(tripId).length;
+
+  /// Packed packing items (return items excluded) for [tripId].
+  int packedCountFor(String tripId) =>
+      _packingItemsFor(tripId).where((item) => item.isPacked).length;
+
   double progressFor(String tripId) {
-    final tripItems = _allItems
-        .where((item) => item.tripId == tripId && !item.isReturnItem)
-        .toList();
-    if (tripItems.isEmpty) return 0;
-    final packed = tripItems.where((item) => item.isPacked).length;
-    return packed / tripItems.length;
+    final total = totalCountFor(tripId);
+    return total == 0 ? 0 : packedCountFor(tripId) / total;
   }
+
+  /// Whether the last [loadItems] for [tripId] failed.
+  bool failedToLoad(String tripId) => _failedTripLoads.contains(tripId);
+
+  /// Items for [tripId] assigned to the family member [travelerId].
+  int assignedCountFor(String tripId, String travelerId) => _allItems
+      .where((item) => item.tripId == tripId && item.travelerId == travelerId)
+      .length;
 
   void selectTrip(String tripId) {
     if (_selectedTripId == tripId) return;
@@ -71,7 +89,9 @@ class ChecklistProvider extends ChangeNotifier {
       final saved = await _repository.getItems(tripId);
       _allItems.removeWhere((item) => item.tripId == tripId);
       _allItems.addAll(saved);
+      _failedTripLoads.remove(tripId);
     } catch (error) {
+      _failedTripLoads.add(tripId);
       _errorMessage = 'Could not load this checklist. Please try again.';
       debugPrint('Failed to load packing items: $error');
     } finally {
@@ -131,6 +151,7 @@ class ChecklistProvider extends ChangeNotifier {
     required String category,
     int quantity = 1,
     bool isShared = false,
+    String? travelerId,
   }) {
     final tripId = _selectedTripId;
     if (tripId == null) {
@@ -147,11 +168,35 @@ class ChecklistProvider extends ChangeNotifier {
       category: _validCategory(category),
       quantity: quantity < 1 ? 1 : quantity,
       isShared: isShared,
+      travelerId: travelerId,
     );
     _allItems.add(item);
     notifyListeners();
     _runPersistence(_repository.insertItem(item));
     return item;
+  }
+
+  /// Clears the assignment of every item given to [travelerId], e.g. after
+  /// that family member is removed, so no item points at a missing person.
+  void unassignTraveler(String travelerId) {
+    var changed = false;
+    for (var i = 0; i < _allItems.length; i++) {
+      final item = _allItems[i];
+      if (item.travelerId != travelerId) continue;
+      _allItems[i] = PackingItem(
+        id: item.id,
+        tripId: item.tripId,
+        name: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        isPacked: item.isPacked,
+        isShared: item.isShared,
+        isReturnItem: item.isReturnItem,
+      );
+      _runPersistence(_repository.updateItem(_allItems[i]));
+      changed = true;
+    }
+    if (changed) notifyListeners();
   }
 
   void updateItem(PackingItem updatedItem) {
