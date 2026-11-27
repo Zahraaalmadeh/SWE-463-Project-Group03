@@ -37,6 +37,7 @@ dependencies:
   path: ^1.9.1
   provider: ^6.1.5+1
   sqflite: ^2.4.2
+  sqflite_common_ffi_web: ^1.2.0+1
 
 dev_dependencies:
   flutter_test:
@@ -59,6 +60,26 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Fraunces (headings) and DM Sans (body), from Google Fonts, SIL Open Font
+  # License. Bundled so text looks the same on web, desktop and mobile.
+  fonts:
+    - family: Fraunces
+      fonts:
+        - asset: assets/fonts/Fraunces-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Fraunces-SemiBold.ttf
+          weight: 600
+    - family: DM Sans
+      fonts:
+        - asset: assets/fonts/DMSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/DMSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/DMSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/DMSans-Bold.ttf
+          weight: 700
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../database/packing_item_repository.dart';
 import '../models/packing_item.dart';
+import '../models/packing_template.dart';
 import '../models/trip.dart';
 
 /// Owns packing items and checklist actions for the selected trip.
@@ -30,7 +31,9 @@ class ChecklistProvider extends ChangeNotifier {
   ];
 
   List<PackingItem> get items => List.unmodifiable(
-    _allItems.where((item) => item.tripId == _selectedTripId),
+    _allItems.where(
+      (item) => item.tripId == _selectedTripId && !item.isReturnItem,
+    ),
   );
   String? get selectedTripId => _selectedTripId;
   bool get isLoading => _isLoading;
@@ -45,7 +48,9 @@ class ChecklistProvider extends ChangeNotifier {
   );
 
   double progressFor(String tripId) {
-    final tripItems = _allItems.where((item) => item.tripId == tripId).toList();
+    final tripItems = _allItems
+        .where((item) => item.tripId == tripId && !item.isReturnItem)
+        .toList();
     if (tripItems.isEmpty) return 0;
     final packed = tripItems.where((item) => item.isPacked).length;
     return packed / tripItems.length;
@@ -79,7 +84,9 @@ class ChecklistProvider extends ChangeNotifier {
   /// length, and traveler count.
   void generateChecklist(Trip trip) {
     _selectedTripId = trip.id;
-    _allItems.removeWhere((item) => item.tripId == trip.id);
+    _allItems.removeWhere(
+      (item) => item.tripId == trip.id && !item.isReturnItem,
+    );
     for (final suggestion in _suggestionsFor(trip)) {
       _allItems.add(
         PackingItem(
@@ -93,6 +100,27 @@ class ChecklistProvider extends ChangeNotifier {
       );
     }
 
+    _errorMessage = null;
+    notifyListeners();
+    _replaceInRepository(trip.id);
+  }
+
+  void applyTemplate(Trip trip, PackingTemplate template) {
+    _selectedTripId = trip.id;
+    _allItems.removeWhere(
+      (item) => item.tripId == trip.id && !item.isReturnItem,
+    );
+    _allItems.addAll(
+      template.items.map(
+        (item) => PackingItem(
+          id: _newId(),
+          tripId: trip.id,
+          name: item.name,
+          category: item.category,
+          quantity: item.quantity,
+        ),
+      ),
+    );
     _errorMessage = null;
     notifyListeners();
     _replaceInRepository(trip.id);
@@ -182,12 +210,18 @@ class ChecklistProvider extends ChangeNotifier {
 
   void removePackedItems() {
     final packedIds = _allItems
-        .where((item) => item.tripId == _selectedTripId && item.isPacked)
+        .where(
+          (item) =>
+              item.tripId == _selectedTripId &&
+              !item.isReturnItem &&
+              item.isPacked,
+        )
         .map((item) => item.id)
         .toList();
     final originalLength = _allItems.length;
     _allItems.removeWhere(
-      (item) => item.tripId == _selectedTripId && item.isPacked,
+      (item) =>
+          item.tripId == _selectedTripId && !item.isReturnItem && item.isPacked,
     );
     if (_allItems.length != originalLength) {
       notifyListeners();

@@ -10,7 +10,7 @@ class DatabaseService {
 
   static final DatabaseService instance = DatabaseService._();
   static const _databaseName = 'shayek.db';
-  static const _databaseVersion = 1;
+  static const _databaseVersion = 4;
 
   Database? _database;
 
@@ -32,6 +32,21 @@ class DatabaseService {
         await database.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _createTables,
+      onUpgrade: (database, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await database.execute(
+            "ALTER TABLE templates ADD COLUMN type TEXT NOT NULL DEFAULT 'other'",
+          );
+        }
+        if (oldVersion < 3) {
+          await database.execute(
+            "ALTER TABLE templates ADD COLUMN visibility TEXT NOT NULL DEFAULT 'private'",
+          );
+        }
+        if (oldVersion < 4) {
+          await database.execute('ALTER TABLE trips ADD COLUMN list_id TEXT');
+        }
+      },
     );
     _database = database;
     return database;
@@ -54,6 +69,7 @@ class DatabaseService {
         duration_days INTEGER NOT NULL,
         departure_date TEXT NOT NULL,
         traveler_count INTEGER NOT NULL,
+        list_id TEXT,
         reminder_enabled INTEGER NOT NULL DEFAULT 0,
         reminder_time TEXT
       )
@@ -84,7 +100,9 @@ class DatabaseService {
     await database.execute('''
       CREATE TABLE templates(
         id TEXT PRIMARY KEY,
-        name TEXT NOT NULL
+        name TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'other',
+        visibility TEXT NOT NULL DEFAULT 'private'
       )
     ''');
     await database.execute('''

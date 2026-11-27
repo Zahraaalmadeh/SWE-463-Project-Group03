@@ -8,6 +8,7 @@ class Trip {
     required this.durationDays,
     required this.departureDate,
     required this.travelerCount,
+    this.listId,
     this.reminderEnabled = false,
     this.reminderTime,
   });
@@ -29,6 +30,7 @@ class Trip {
       durationDays: map['duration_days']! as int,
       departureDate: DateTime.parse(map['departure_date']! as String),
       travelerCount: map['traveler_count']! as int,
+      listId: map['list_id'] as String?,
       // SQLite has no boolean type; the column stores 0/1.
       reminderEnabled: (map['reminder_enabled'] as int? ?? 0) != 0,
       reminderTime: reminderTime == null ? null : DateTime.parse(reminderTime),
@@ -41,12 +43,13 @@ class Trip {
   final int durationDays;
   final DateTime departureDate;
   final int travelerCount;
+  final String? listId;
   final bool reminderEnabled;
   final DateTime? reminderTime;
 
   /// Converts the trip to a row of the `trips` table.
   Map<String, Object?> toMap() {
-    return {
+    final map = <String, Object?>{
       'id': id,
       'name': name,
       'type': type.name,
@@ -56,5 +59,7 @@ class Trip {
       'reminder_enabled': reminderEnabled ? 1 : 0,
       'reminder_time': reminderTime?.toIso8601String(),
     };
+    if (listId != null) map['list_id'] = listId;
+    return map;
   }
 }

@@ -14,6 +14,7 @@ class TripProvider extends ChangeNotifier {
   final List<Trip> _trips = [];
   final _random = Random();
   bool _isLoading = false;
+  bool _hasLoaded = false;
   String? _errorMessage;
 
   List<Trip> get trips => List.unmodifiable(_trips);
@@ -36,6 +37,7 @@ class TripProvider extends ChangeNotifier {
   /// from initState) and otherwise only read `trips`/`isLoading`/`errorMessage`
   /// through this provider, never through DatabaseService directly.
   Future<void> loadTrips() async {
+    if (_hasLoaded || _isLoading) return;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -45,6 +47,7 @@ class TripProvider extends ChangeNotifier {
       _trips
         ..clear()
         ..addAll(saved);
+      _hasLoaded = true;
     } catch (error) {
       _errorMessage = 'Could not load trips. Please try again.';
       debugPrint('Failed to load trips: $error');
@@ -65,11 +68,13 @@ class TripProvider extends ChangeNotifier {
     required int durationDays,
     required DateTime departureDate,
     required int travelerCount,
+    String? listId,
   }) async {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
       throw ArgumentError.value(name, 'name', 'Trip name cannot be empty.');
     }
+
     if (durationDays < 1) {
       throw RangeError.value(
         durationDays,
@@ -96,6 +101,7 @@ class TripProvider extends ChangeNotifier {
         departureDate.day,
       ),
       travelerCount: travelerCount,
+      listId: listId,
     );
 
     await _repository.insertTrip(trip);
@@ -121,6 +127,7 @@ class TripProvider extends ChangeNotifier {
       durationDays: trip.durationDays,
       departureDate: trip.departureDate,
       travelerCount: trip.travelerCount,
+      listId: trip.listId,
       reminderEnabled: enabled,
       reminderTime: enabled ? reminderTime : null,
     );
@@ -132,8 +139,30 @@ class TripProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> attachList(Trip trip, String listId) async {
+    await _repository.attachList(trip.id, listId);
+    final index = _trips.indexWhere((item) => item.id == trip.id);
+    if (index >= 0) {
+      _trips[index] = Trip(
+        id: trip.id,
+        name: trip.name,
+        type: trip.type,
+        durationDays: trip.durationDays,
+        departureDate: trip.departureDate,
+        travelerCount: trip.travelerCount,
+        listId: listId,
+        reminderEnabled: trip.reminderEnabled,
+        reminderTime: trip.reminderTime,
+      );
+      notifyListeners();
+    }
+  }
+
   String _newId() {
-    final suffix = _random.nextInt(1 << 32).toRadixString(16).padLeft(8, '0');
+    final suffix = _random
+        .nextInt(0x7fffffff)
+        .toRadixString(16)
+        .padLeft(8, '0');
     return 'trip-${DateTime.now().microsecondsSinceEpoch}-$suffix';
   }
 }

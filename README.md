@@ -1,56 +1,63 @@
-# Shayek “ Smart Trip Packing Assistant
+# Shayek - Smart Trip Packing Assistant
 
-**SWE463 · Group 03**
+**SWE463, Group 03**
 
-Shayek is a Flutter app proposal for helping individuals and families prepare for trips with organized, reusable packing lists. The app is intended to generate a suggested checklist from trip details, let users manage and mark items as packed, and save lists as templates.
+Shayek helps travelers plan trips, create packing checklists, and reuse packing lists.
 
-## Project status
+## Features
 
-The Phase 4 implementation includes the essential Shayek features with SQLite-backed trip, template, and packing-checklist persistence. Family-member and return-checklist screens remain optional placeholder areas unless their final implementation is explicitly completed.
+- Create trips with type, duration, departure date, and traveler count.
+- Generate and manage trip packing lists; search and filter items and track packing progress.
+- Save, edit, and reuse packing templates.
+- Organize persisted family members and shared packing items.
+- Manage a return checklist and save departure reminder settings.
 
-## Implemented features
+Family-member and return-checklist flows are optional Phase 4 features and are implemented. The reminder setting and time are persisted, but the app does not schedule or deliver platform notifications.
 
-- Create a trip with its type, duration, departure date, and number of travelers.
-- Generate and persist a suggested packing checklist based on trip details.
-- Add, edit, delete, categorize, and check off packing items.
-- Persist checklist items and packed state, including synchronized Home and checklist progress.
-- Save and reuse packing templates.
-- Family-member organization with persisted traveler records.
-- Return checklist with custom items and persisted reminder settings.
+## Project structure
 
-## Run the starter app
+The Flutter app is in `shayek/`:
 
-Install the Flutter SDK, then from the repository root run:
+```text
+shayek/
+  lib/
+    main.dart
+    app_routes.dart
+    models/
+    providers/
+    database/
+    screens/
+    theme/
+    widgets/
+  test/
+```
+
+Screens use Providers for state; Providers use repositories in `database/` for persistence.
+
+## Setup and run
+
+Install Flutter, then:
 
 ```bash
+cd shayek
 flutter pub get
 flutter run -d chrome
 ```
 
-To run on another device, use `flutter devices` to see available targets, then run `flutter run -d <device-id>`.
+Use `flutter devices` to select another target.
 
-## Project structure
+## Validation
 
-```text
-lib/
-  main.dart       App entry point
-  screens/        Main app screens
-  widgets/        Reusable interface components
-  models/         Data model classes
-  providers/      Shared application state
-  database/       SQLite repositories and database setup
+From `shayek/`:
+
+```bash
+flutter analyze
+flutter test
 ```
 
-## Technology and packages
+## Storage and limitations
 
-- **Flutter and Dart** ” app framework and language.
-
-- `sqflite` provides local SQLite storage.
-- `provider` provides shared state with `ChangeNotifier`.
-
-## Repository
-
-[SWE-463 Project Group 03 on GitHub](https://github.com/Zahraaalmadeh/SWE-463-Project-Group03)
+Trips, templates, checklist items, family-member records, packed state, and reminder settings are stored locally. Web storage uses IndexedDB and is scoped to the app's origin and port. The app has no sign-in or cloud synchronization, and reminder notifications are not scheduled.
 
 ## Team
 
@@ -61,10 +68,10 @@ lib/
 | Zahra Almadeh | 202254580 |
 | Atheer Almomtan | 202246520 |
 
-## Verification
+## Repository
 
-From `shayek/`, run `flutter pub get`, `flutter analyze`, and `flutter test`. The checklist provider test suite verifies item and packed-state persistence across provider instances.
+[SWE-463 Project Group 03](https://github.com/Zahraaalmadeh/SWE-463-Project-Group03)
 
-## References and assets
+## AI-use disclosure
 
-The Phase 1 proposal identifies Flutter, Dart, and possible packages listed above.
+AI was used for setup guidance, debugging, and implementation suggestions. The team reviewed the resulting code.

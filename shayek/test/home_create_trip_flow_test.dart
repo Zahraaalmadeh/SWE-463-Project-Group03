@@ -6,6 +6,7 @@ import 'package:shayek/models/trip.dart';
 import 'package:shayek/providers/checklist_provider.dart';
 import 'package:shayek/providers/template_provider.dart';
 import 'package:shayek/providers/trip_provider.dart';
+import 'package:shayek/widgets/home_trip_card.dart';
 
 import 'fakes/in_memory_trip_repository.dart';
 
@@ -47,8 +48,8 @@ void main() {
 
     await _pumpApp(tester, repo);
 
-    expect(find.text('Upcoming Trips'), findsOneWidget);
-    expect(find.text('1 trip'), findsOneWidget);
+    expect(find.text('Your trips'), findsOneWidget);
+    expect(find.byType(HomeTripCard), findsOneWidget);
     expect(find.text('Amalfi Coast'), findsOneWidget);
   });
 
@@ -61,7 +62,7 @@ void main() {
     // Empty database: Home shows its empty state.
     expect(find.text('Your next adventure starts here'), findsOneWidget);
 
-    await tester.tap(find.text('New Trip'));
+    await tester.tap(find.text('New trip'));
     await tester.pumpAndSettle();
     expect(find.text('Where are you headed?'), findsOneWidget);
 
@@ -88,10 +89,10 @@ void main() {
     navigator.pop();
     await tester.pumpAndSettle();
 
-    expect(find.text('Upcoming Trips'), findsOneWidget);
-    expect(find.text('1 trip'), findsOneWidget);
+    expect(find.text('Your trips'), findsOneWidget);
+    expect(find.byType(HomeTripCard), findsOneWidget);
     expect(find.text('Banff Lakes'), findsOneWidget);
-    expect(find.text('Camping'), findsWidgets);
+    expect(find.text('CAMPING TRIP'), findsOneWidget);
 
     // A fresh load from the database (e.g. next app start) still has it.
     await tester

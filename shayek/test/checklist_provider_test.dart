@@ -134,6 +134,13 @@ void main() {
 
       provider.addReturnItem(name: 'Return keys');
       await Future<void>.delayed(Duration.zero);
+      provider.generateChecklist(trip);
+      await Future<void>.delayed(Duration.zero);
+      expect(provider.items.every((item) => !item.isReturnItem), isTrue);
+      expect(
+        provider.returnItems.any((item) => item.name == 'Return keys'),
+        isTrue,
+      );
       final reloaded = ChecklistProvider(repository: repository);
       await reloaded.loadItems(trip.id);
       reloaded.selectTrip(trip.id);

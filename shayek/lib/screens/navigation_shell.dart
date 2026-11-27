@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_routes.dart';
+import '../theme/app_theme.dart';
 import '../widgets/shared_bottom_navigation_bar.dart';
 import 'home_screen.dart';
 import 'templates_screen.dart';
@@ -27,19 +28,33 @@ class _NavigationShellState extends State<NavigationShell> {
   @override
   Widget build(BuildContext context) {
     const screens = [HomeScreen(), TemplatesScreen()];
+    final isHome = _selectedIndex == 0;
 
     return Scaffold(
-      body: screens[_selectedIndex],
-      bottomNavigationBar: SharedBottomNavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          if (index == _selectedIndex) return;
-          if (index == 0) {
-            Navigator.of(context).pushReplacementNamed(AppRoutes.home);
-          } else {
-            Navigator.of(context).pushReplacementNamed(AppRoutes.templates);
-          }
-        },
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          SharedSiteHeader(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) {
+              if (index == _selectedIndex) return;
+              Navigator.of(context).pushReplacementNamed(
+                index == 0 ? AppRoutes.home : AppRoutes.templates,
+              );
+            },
+            action: isHome
+                ? HeaderActionButton(
+                    label: 'New trip',
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.createTrip),
+                  )
+                : HeaderActionButton(
+                    label: 'Create list',
+                    onPressed: () => showCreateListDialog(context),
+                  ),
+          ),
+          Expanded(child: screens[_selectedIndex]),
+        ],
       ),
     );
   }
