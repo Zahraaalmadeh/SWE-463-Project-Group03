@@ -43,9 +43,15 @@ class AppRoutes {
       case AppRoutes.templates:
         return _page(settings, const NavigationShell(initialTabIndex: 1));
       case AppRoutes.family:
-        return _page(settings, const FamilyMembersScreen());
+        final trip = settings.arguments is Trip
+            ? settings.arguments! as Trip
+            : null;
+        return _page(settings, FamilyMembersScreen(trip: trip));
       case AppRoutes.returnChecklist:
-        return _page(settings, const ReturnChecklistScreen());
+        final trip = settings.arguments is Trip
+            ? settings.arguments! as Trip
+            : null;
+        return _page(settings, ReturnChecklistScreen(trip: trip));
       case AppRoutes.templateEditor:
         return _page(settings, const TemplateEditorScreen());
       default:

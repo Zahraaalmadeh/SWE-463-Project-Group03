@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../app_routes.dart';
 import '../models/trip.dart';
+import '../providers/checklist_provider.dart';
 import '../providers/trip_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/home_trip_card.dart';
@@ -42,9 +43,19 @@ class _HomeScreenState extends State<HomeScreen> {
     // is still being built.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<TripProvider>().loadTrips();
+        _loadHomeData();
       }
     });
+  }
+
+  Future<void> _loadHomeData() async {
+    final tripProvider = context.read<TripProvider>();
+    await tripProvider.loadTrips();
+    if (!mounted) return;
+    final checklistProvider = context.read<ChecklistProvider>();
+    for (final trip in tripProvider.trips) {
+      await checklistProvider.loadItems(trip.id);
+    }
   }
 
   @override
@@ -110,37 +121,42 @@ class _TripGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const spacing = 28.0;
-        // Each ticket needs ~500px to keep the name readable beside the
-        // date stub; below two of those, use a single column.
-        final isWide = constraints.maxWidth >= 500 * 2 + spacing;
-        final cardWidth = isWide
-            ? (constraints.maxWidth - spacing) / 2
-            : constraints.maxWidth;
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: [
-            for (final trip in trips)
+    return Consumer<ChecklistProvider>(
+      builder: (context, checklistProvider, _) => LayoutBuilder(
+        builder: (context, constraints) {
+          const spacing = 28.0;
+          // Each ticket needs ~500px to keep the name readable beside the
+          // date stub; below two of those, use a single column.
+          final isWide = constraints.maxWidth >= 500 * 2 + spacing;
+          final cardWidth = isWide
+              ? (constraints.maxWidth - spacing) / 2
+              : constraints.maxWidth;
+          return Wrap(
+            spacing: spacing,
+            runSpacing: spacing,
+            children: [
+              for (final trip in trips)
+                SizedBox(
+                  width: cardWidth,
+                  child: HomeTripCard(
+                    trip: _toHomeTrip(
+                      trip,
+                      checklistProvider.progressFor(trip.id),
+                    ),
+                    onTap: () => _openChecklist(context, trip),
+                  ),
+                ),
               SizedBox(
                 width: cardWidth,
-                child: HomeTripCard(
-                  trip: _toHomeTrip(trip),
-                  onTap: () => _openChecklist(context, trip),
+                child: PlanAnotherTripCard(
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.createTrip),
                 ),
               ),
-            SizedBox(
-              width: cardWidth,
-              child: PlanAnotherTripCard(
-                onTap: () =>
-                    Navigator.of(context).pushNamed(AppRoutes.createTrip),
-              ),
-            ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -152,12 +168,13 @@ class _TripGrid extends StatelessWidget {
   }
 
   /// Adapts the persisted [Trip] into the card's display model.
-  HomeTrip _toHomeTrip(Trip trip) {
+  HomeTrip _toHomeTrip(Trip trip, double progress) {
     final date = trip.departureDate;
     final days = trip.durationDays;
     final travelers = trip.travelerCount;
     return HomeTrip(
       name: trip.name,
+      progress: progress,
       type: trip.type,
       typeLabel: '${trip.type.name.toUpperCase()} TRIP',
       departureDay: date.day.toString().padLeft(2, '0'),

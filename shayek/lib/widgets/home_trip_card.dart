@@ -13,6 +13,7 @@ class HomeTrip {
     required this.departureDay,
     required this.departureMonthYear,
     required this.details,
+    required this.progress,
   });
 
   final String name;
@@ -29,6 +30,7 @@ class HomeTrip {
 
   /// e.g. "5 days · 4 travelers".
   final String details;
+  final double progress;
 }
 
 /// Height every Home card shares, so tickets and the "Plan another trip" card
@@ -138,22 +140,43 @@ class _TicketBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 26),
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(trip.typeLabel, style: AppText.eyebrow(colors.onTint)),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             trip.name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppText.cardTitle.copyWith(fontSize: 28, height: 1.15),
+            style: AppText.cardTitle.copyWith(fontSize: 24, height: 1.15),
           ),
           const Spacer(),
           Text(
             trip.details,
-            style: const TextStyle(color: AppColors.muted, fontSize: 15),
+            style: const TextStyle(color: AppColors.muted, fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: trip.progress,
+                    minHeight: 4,
+                    backgroundColor: AppColors.line,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${(trip.progress * 100).round()}% packed',
+                style: const TextStyle(color: AppColors.muted, fontSize: 12),
+              ),
+            ],
           ),
         ],
       ),

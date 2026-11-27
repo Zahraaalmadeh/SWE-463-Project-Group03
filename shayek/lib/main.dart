@@ -9,6 +9,7 @@ import 'providers/checklist_provider.dart';
 import 'providers/template_provider.dart';
 import 'providers/trip_provider.dart';
 import 'theme/app_theme.dart';
+import 'providers/traveler_provider.dart';
 
 void main() {
   if (kIsWeb) {
@@ -28,6 +29,7 @@ class ShayekApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TripProvider()),
         ChangeNotifierProvider(create: (_) => ChecklistProvider()),
         ChangeNotifierProvider(create: (_) => TemplateProvider()),
+        ChangeNotifierProvider(create: (_) => TravelerProvider()),
       ],
       child: MaterialApp(
         title: 'Shayek',

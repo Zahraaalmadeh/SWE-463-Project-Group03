@@ -113,6 +113,32 @@ class TripProvider extends ChangeNotifier {
     return trip;
   }
 
+  Future<void> updateReminder({
+    required String tripId,
+    required bool enabled,
+    required DateTime? reminderTime,
+  }) async {
+    final trip = tripById(tripId);
+    if (trip == null) return;
+    final updated = Trip(
+      id: trip.id,
+      name: trip.name,
+      type: trip.type,
+      durationDays: trip.durationDays,
+      departureDate: trip.departureDate,
+      travelerCount: trip.travelerCount,
+      listId: trip.listId,
+      reminderEnabled: enabled,
+      reminderTime: enabled ? reminderTime : null,
+    );
+    await _repository.updateTrip(updated);
+    final index = _trips.indexWhere((item) => item.id == tripId);
+    if (index >= 0) {
+      _trips[index] = updated;
+      notifyListeners();
+    }
+  }
+
   Future<void> attachList(Trip trip, String listId) async {
     await _repository.attachList(trip.id, listId);
     final index = _trips.indexWhere((item) => item.id == trip.id);

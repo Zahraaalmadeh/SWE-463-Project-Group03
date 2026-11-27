@@ -3,11 +3,17 @@ import 'package:shayek/models/packing_item.dart';
 import 'package:shayek/models/trip.dart';
 import 'package:shayek/providers/checklist_provider.dart';
 
+import 'fakes/in_memory_packing_item_repository.dart';
+
 void main() {
   group('ChecklistProvider', () {
     late ChecklistProvider provider;
 
-    setUp(() => provider = ChecklistProvider());
+    setUp(
+      () => provider = ChecklistProvider(
+        repository: InMemoryPackingItemRepository(),
+      ),
+    );
     tearDown(() => provider.dispose());
 
     test('generates trip-specific items and derives packing progress', () {
@@ -24,7 +30,10 @@ void main() {
 
       expect(provider.selectedTripId, 'trip-1');
       expect(provider.items.any((item) => item.name == 'Swimsuit'), isTrue);
-      expect(provider.items.firstWhere((item) => item.name == 'Tops').quantity, 8);
+      expect(
+        provider.items.firstWhere((item) => item.name == 'Tops').quantity,
+        8,
+      );
       expect(provider.progress, 0);
       final item = provider.items.first;
       provider.togglePacked(item.id);
@@ -78,17 +87,83 @@ void main() {
       expect(provider.items.length, campingCount);
       expect(provider.items.any((item) => item.name == 'Camping tent'), isTrue);
     });
+
+    test('persists items and packed state across provider instances', () async {
+      final repository = InMemoryPackingItemRepository();
+      final provider = ChecklistProvider(repository: repository);
+      final trip = Trip(
+        id: 'persisted-trip',
+        name: 'Persisted',
+        type: TripType.city,
+        durationDays: 3,
+        departureDate: DateTime(2026, 9, 1),
+        travelerCount: 1,
+      );
+
+      provider.generateChecklist(trip);
+      await Future<void>.delayed(Duration.zero);
+      final item = provider.items.first;
+      provider.togglePacked(item.id);
+      await Future<void>.delayed(Duration.zero);
+
+      final reloaded = ChecklistProvider(repository: repository);
+      await reloaded.loadItems(trip.id);
+      reloaded.selectTrip(trip.id);
+
+      expect(reloaded.items, isNotEmpty);
+      expect(reloaded.packedCount, 1);
+      expect(reloaded.progressFor(trip.id), greaterThan(0));
+      reloaded.dispose();
+      provider.dispose();
+    });
+
+    test('creates and persists a return checklist', () async {
+      final repository = InMemoryPackingItemRepository();
+      final provider = ChecklistProvider(repository: repository);
+      final trip = Trip(
+        id: 'return-trip',
+        name: 'Return trip',
+        type: TripType.city,
+        durationDays: 2,
+        departureDate: DateTime(2026, 10, 1),
+        travelerCount: 2,
+      );
+
+      provider.ensureReturnChecklist(trip);
+      await Future<void>.delayed(Duration.zero);
+
+      provider.addReturnItem(name: 'Return keys');
+      await Future<void>.delayed(Duration.zero);
+      provider.generateChecklist(trip);
+      await Future<void>.delayed(Duration.zero);
+      expect(provider.items.every((item) => !item.isReturnItem), isTrue);
+      expect(
+        provider.returnItems.any((item) => item.name == 'Return keys'),
+        isTrue,
+      );
+      final reloaded = ChecklistProvider(repository: repository);
+      await reloaded.loadItems(trip.id);
+      reloaded.selectTrip(trip.id);
+
+      expect(reloaded.returnItems, isNotEmpty);
+      expect(
+        reloaded.returnItems.any((item) => item.name == 'Return keys'),
+        isTrue,
+      );
+      reloaded.dispose();
+      provider.dispose();
+    });
   });
 }
 
 PackingItem _copyItem(PackingItem item, {required String name}) => PackingItem(
-      id: item.id,
-      tripId: item.tripId,
-      travelerId: item.travelerId,
-      name: name,
-      category: item.category,
-      quantity: item.quantity,
-      isPacked: item.isPacked,
-      isShared: item.isShared,
-      isReturnItem: item.isReturnItem,
-    );
+  id: item.id,
+  tripId: item.tripId,
+  travelerId: item.travelerId,
+  name: name,
+  category: item.category,
+  quantity: item.quantity,
+  isPacked: item.isPacked,
+  isShared: item.isShared,
+  isReturnItem: item.isReturnItem,
+);

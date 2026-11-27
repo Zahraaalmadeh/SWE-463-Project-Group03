@@ -48,11 +48,14 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       if (!mounted) return;
       final checklist = context.read<ChecklistProvider>();
       checklist.selectTrip(_trip.id);
-      if (widget.template != null) {
-        checklist.applyTemplate(_trip, widget.template!);
-      } else if (checklist.items.isEmpty) {
-        checklist.generateChecklist(_trip);
-      }
+      checklist.loadItems(_trip.id).then((_) {
+        if (!mounted) return;
+        if (widget.template != null) {
+          checklist.applyTemplate(_trip, widget.template!);
+        } else if (checklist.items.isEmpty) {
+          checklist.generateChecklist(_trip);
+        }
+      });
     });
   }
 
@@ -161,11 +164,20 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         if (action == 'generate') _showGenerateDialog();
         if (action == 'clear') _confirmRemovePacked();
         if (action == 'save-template') _saveAsTemplate();
+        if (action == 'family') {
+          Navigator.of(context).pushNamed(AppRoutes.family, arguments: _trip);
+        }
+        if (action == 'return') {
+          Navigator.of(context)
+              .pushNamed(AppRoutes.returnChecklist, arguments: _trip);
+        }
       },
       itemBuilder: (_) => const [
         PopupMenuItem(value: 'generate', child: Text('Regenerate checklist')),
         PopupMenuItem(value: 'clear', child: Text('Remove packed items')),
         PopupMenuItem(value: 'save-template', child: Text('Save as list')),
+        PopupMenuItem(value: 'family', child: Text('Family members')),
+        PopupMenuItem(value: 'return', child: Text('Return checklist')),
       ],
       child: Container(
         width: 48,
