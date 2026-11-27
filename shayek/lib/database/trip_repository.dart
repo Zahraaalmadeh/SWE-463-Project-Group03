@@ -7,6 +7,7 @@ import 'database_service.dart';
 /// and tests can substitute an in-memory implementation.
 abstract interface class TripRepository {
   Future<void> insertTrip(Trip trip);
+  Future<void> updateTrip(Trip trip);
 
   /// Returns every saved trip, soonest departure first.
   Future<List<Trip>> getTrips();
@@ -29,6 +30,18 @@ class SqfliteTripRepository implements TripRepository {
     await database.insert(
       _table,
       trip.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.abort,
+    );
+  }
+
+  @override
+  Future<void> updateTrip(Trip trip) async {
+    final database = await _databaseService.database;
+    await database.update(
+      _table,
+      trip.toMap(),
+      where: 'id = ?',
+      whereArgs: [trip.id],
       conflictAlgorithm: ConflictAlgorithm.abort,
     );
   }

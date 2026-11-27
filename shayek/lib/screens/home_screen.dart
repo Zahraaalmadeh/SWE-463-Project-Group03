@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../app_routes.dart';
 import '../models/trip.dart';
+import '../providers/checklist_provider.dart';
 import '../providers/trip_provider.dart';
 import '../widgets/home_trip_card.dart';
 
@@ -47,9 +48,19 @@ class _HomeScreenState extends State<HomeScreen> {
     // is still being built.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<TripProvider>().loadTrips();
+        _loadHomeData();
       }
     });
+  }
+
+  Future<void> _loadHomeData() async {
+    final tripProvider = context.read<TripProvider>();
+    await tripProvider.loadTrips();
+    if (!mounted) return;
+    final checklistProvider = context.read<ChecklistProvider>();
+    for (final trip in tripProvider.trips) {
+      await checklistProvider.loadItems(trip.id);
+    }
   }
 
   @override
@@ -128,28 +139,36 @@ class _TripList extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            const spacing = 24.0;
-            // 640 is roughly two card-widths' worth of room; below it a
-            // single column reads better than two cramped columns.
-            final isWide = constraints.maxWidth >= 640;
-            final cardWidth = isWide
-                ? (constraints.maxWidth - spacing) / 2
-                : constraints.maxWidth;
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: [
-                for (final (index, trip) in trips.indexed)
-                  SizedBox(
-                    width: cardWidth,
-                    child: HomeTripCard(
-                      trip: _toHomeTrip(trip, index),
-                      onTap: () => _openChecklist(context, trip),
-                    ),
-                  ),
-              ],
+        Consumer<ChecklistProvider>(
+          builder: (context, checklistProvider, _) {
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                const spacing = 24.0;
+                // 640 is roughly two card-widths' worth of room; below it a
+                // single column reads better than two cramped columns.
+                final isWide = constraints.maxWidth >= 640;
+                final cardWidth = isWide
+                    ? (constraints.maxWidth - spacing) / 2
+                    : constraints.maxWidth;
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: [
+                    for (final (index, trip) in trips.indexed)
+                      SizedBox(
+                        width: cardWidth,
+                        child: HomeTripCard(
+                          trip: _toHomeTrip(
+                            trip,
+                            index,
+                            checklistProvider.progressFor(trip.id),
+                          ),
+                          onTap: () => _openChecklist(context, trip),
+                        ),
+                      ),
+                  ],
+                );
+              },
             );
           },
         ),
@@ -164,10 +183,8 @@ class _TripList extends StatelessWidget {
     Navigator.of(context).pushNamed(AppRoutes.checklist, arguments: trip);
   }
 
-  /// Adapts the persisted [Trip] into the card's display model. Packing
-  /// progress needs the checklist data (out of scope for this feature), so it
-  /// is shown as 0% until Checklist is wired up.
-  HomeTrip _toHomeTrip(Trip trip, int index) {
+  /// Adapts the persisted [Trip] into the card's display model.
+  HomeTrip _toHomeTrip(Trip trip, int index, double progress) {
     final date = trip.departureDate;
     return HomeTrip(
       name: trip.name,
@@ -175,7 +192,7 @@ class _TripList extends StatelessWidget {
       date: '${_monthNames[date.month - 1]} ${date.day}, ${date.year}',
       duration: '${trip.durationDays} day${trip.durationDays == 1 ? '' : 's'}',
       travelers: '${trip.travelerCount}',
-      progress: 0,
+      progress: progress,
       colors: _cardGradients[index % _cardGradients.length],
     );
   }

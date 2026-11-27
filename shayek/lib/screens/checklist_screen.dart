@@ -44,7 +44,10 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       if (!mounted) return;
       final checklist = context.read<ChecklistProvider>();
       checklist.selectTrip(_trip.id);
-      if (checklist.items.isEmpty) checklist.generateChecklist(_trip);
+      checklist.loadItems(_trip.id).then((_) {
+        if (!mounted) return;
+        if (checklist.items.isEmpty) checklist.generateChecklist(_trip);
+      });
     });
   }
 
@@ -67,6 +70,14 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
             onSelected: (action) {
               if (action == 'generate') _showGenerateDialog();
               if (action == 'clear') _confirmRemovePacked();
+              if (action == 'family') {
+                Navigator.of(context)
+                    .pushNamed(AppRoutes.family, arguments: _trip);
+              }
+              if (action == 'return') {
+                Navigator.of(context)
+                    .pushNamed(AppRoutes.returnChecklist, arguments: _trip);
+              }
             },
             itemBuilder: (_) => const [
               PopupMenuItem(
@@ -74,6 +85,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                 child: Text('Regenerate checklist'),
               ),
               PopupMenuItem(value: 'clear', child: Text('Remove packed items')),
+              PopupMenuItem(value: 'family', child: Text('Family members')),
+              PopupMenuItem(value: 'return', child: Text('Return checklist')),
             ],
           ),
         ],

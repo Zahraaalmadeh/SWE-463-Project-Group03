@@ -6,15 +6,17 @@ Shayek is a Flutter app proposal for helping individuals and families prepare fo
 
 ## Project status
 
-This repository contains the Phase 2 Flutter starter project. The team is preparing the interface and technical design; features described below are planned and should not be treated as implemented until they are present in the app.
+The Phase 4 implementation includes the essential Shayek features with SQLite-backed trip, template, and packing-checklist persistence. Family-member and return-checklist screens remain optional placeholder areas unless their final implementation is explicitly completed.
 
-## Planned features
+## Implemented features
 
 - Create a trip with its type, duration, departure date, and number of travelers.
-- Generate a suggested packing checklist based on trip details.
+- Generate and persist a suggested packing checklist based on trip details.
 - Add, edit, delete, categorize, and check off packing items.
+- Persist checklist items and packed state, including synchronized Home and checklist progress.
 - Save and reuse packing templates.
-- Optional: organize items by family member and use a return checklist with reminders.
+- Family-member organization with persisted traveler records.
+- Return checklist with custom items and persisted reminder settings.
 
 ## Run the starter app
 
@@ -35,16 +37,16 @@ lib/
   screens/        Main app screens
   widgets/        Reusable interface components
   models/         Data model classes
-  services/       Data access and other app services
+  providers/      Shared application state
+  database/       SQLite repositories and database setup
 ```
-
-Folders may be added or removed later these are just the initials attempt.
 
 ## Technology and packages
 
 - **Flutter and Dart** ” app framework and language.
 
-- The Phase 1 proposal plans local storage with `sqflite`, state management with Provider or `ChangeNotifier`, and possibly `flutter_local_notifications` for reminders. These are plans, not confirmed installed dependencies. 
+- `sqflite` provides local SQLite storage.
+- `provider` provides shared state with `ChangeNotifier`.
 
 ## Repository
 
@@ -61,7 +63,7 @@ Folders may be added or removed later these are just the initials attempt.
 
 ## Verification
 
-On the current setup, `flutter pub get` completed, `flutter analyze` reported no issues, and `flutter run -d chrome` launched the app. 
+From `shayek/`, run `flutter pub get`, `flutter analyze`, and `flutter test`. The checklist provider test suite verifies item and packed-state persistence across provider instances.
 
 ## References and assets
 

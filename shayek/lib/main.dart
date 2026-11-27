@@ -5,6 +5,7 @@ import 'app_routes.dart';
 import 'providers/checklist_provider.dart';
 import 'providers/template_provider.dart';
 import 'providers/trip_provider.dart';
+import 'providers/traveler_provider.dart';
 
 void main() {
   runApp(const ShayekApp());
@@ -21,6 +22,7 @@ class ShayekApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TripProvider()),
         ChangeNotifierProvider(create: (_) => ChecklistProvider()),
         ChangeNotifierProvider(create: (_) => TemplateProvider()),
+        ChangeNotifierProvider(create: (_) => TravelerProvider()),
       ],
       child: MaterialApp(
         title: 'Shayek',

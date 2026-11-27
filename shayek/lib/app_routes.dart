@@ -22,14 +22,22 @@ class AppRoutes {
       case createTrip:
         return _page(settings, const CreateTripScreen());
       case checklist:
-        final trip = settings.arguments is Trip ? settings.arguments! as Trip : null;
+        final trip = settings.arguments is Trip
+            ? settings.arguments! as Trip
+            : null;
         return _page(settings, ChecklistScreen(trip: trip));
       case templates:
         return _page(settings, const NavigationShell(initialTabIndex: 1));
       case family:
-        return _page(settings, const FamilyMembersScreen());
+        final trip = settings.arguments is Trip
+            ? settings.arguments! as Trip
+            : null;
+        return _page(settings, FamilyMembersScreen(trip: trip));
       case returnChecklist:
-        return _page(settings, const ReturnChecklistScreen());
+        final trip = settings.arguments is Trip
+            ? settings.arguments! as Trip
+            : null;
+        return _page(settings, ReturnChecklistScreen(trip: trip));
       default:
         return _page(settings, const NavigationShell());
     }

@@ -19,6 +19,13 @@ class InMemoryTripRepository implements TripRepository {
   }
 
   @override
+  Future<void> updateTrip(Trip trip) async {
+    _maybeFail();
+    final index = rows.indexWhere((row) => row['id'] == trip.id);
+    if (index >= 0) rows[index] = trip.toMap();
+  }
+
+  @override
   Future<List<Trip>> getTrips() async {
     _maybeFail();
     final trips = rows.map(Trip.fromMap).toList()
