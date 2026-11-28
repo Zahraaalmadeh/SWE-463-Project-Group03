@@ -114,4 +114,4 @@ Manual test of the main flow:
 - **Fonts:** Fraunces and DM Sans from Google Fonts (SIL Open Font License 1.1), in `shayek/assets/fonts/`.
 - **Icons:** Material Icons from the Flutter SDK.
 - **Code and datasets:** no external code or datasets; packing suggestions and sample lists were written by the team.
-- **AI use:** AI assistance (Claude) was used for setup guidance, debugging, UI implementation suggestions, tests, and documentation. The team reviewed and tested all changes.
+- **AI use:** AI was used for setup guidance, debugging, UI implementation suggestions, tests, and documentation. The team reviewed and tested all changes.
